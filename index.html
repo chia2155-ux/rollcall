@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數位行動點名板 - 排序修復版</title>
+    <title>數位行動點名板 - 最終修正版</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root {
@@ -12,38 +12,31 @@
         }
         body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f5f5f5; margin: 0; padding: 0 8px 140px 8px; }
 
-        /* 凍結統計欄 */
         .sticky-header { position: sticky; top: 0; z-index: 1000; background-color: #f5f5f5; padding-top: 8px; padding-bottom: 5px; }
         .summary-table { width: 100%; background: #fff; border-collapse: collapse; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; text-align: center; font-size: 0.75em; }
         .summary-table th { background: #34495e; color: white; padding: 4px; }
         .summary-table td { padding: 6px; font-weight: bold; border: 1px solid #eee; }
 
-        /* 區塊標題 */
         .section-header { display: flex; justify-content: space-between; align-items: center; background: var(--primary); color: white; padding: 5px 12px; margin-top: 12px; border-radius: 5px; }
-        .section-header button { background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 2px 8px; font-size: 0.75em; }
+        .section-header button { background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 2px 8px; font-size: 0.75em; border-radius: 4px; }
         
         .row { display: flex; background: white; border-bottom: 1px solid #ddd; min-height: 50px; }
         .label { width: 65px; background: var(--group-bg); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75em; text-align: center; border-right: 2px solid #ccc; padding: 4px; flex-shrink: 0; }
         .in-row .label { background: var(--in-camp-bg); }
         .off-row .label { background: var(--off-camp-bg); color: #c62828; }
 
-        /* 人員卡片 */
         .drag-zone { flex-grow: 1; padding: 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 4px; min-height: 40px; }
         .person-card { padding: 5px 2px; border-radius: 3px; font-size: 0.8em; text-align: center; box-shadow: 1px 1px 2px rgba(0,0,0,0.1); font-weight: bold; border: 1px solid rgba(0,0,0,0.05); }
         .card-officer { background-color: var(--officer); color: white; }
         .card-nco { background-color: var(--nco); color: #222; }
         .card-soldier { background-color: var(--soldier); color: #222; }
 
-        /* 底部按鈕 */
         .btn-container { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 10px 8px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; box-shadow: 0 -2px 15px rgba(0,0,0,0.15); z-index: 1000; }
         .btn-container button { padding: 10px 0; border: none; border-radius: 6px; font-weight: bold; font-size: 0.85em; color: white; }
         .full-row { grid-column: span 3; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-        /* 管理彈窗清單樣式 */
         #config-list { max-height: 300px; overflow-y: auto; margin: 10px 0; padding: 5px; border: 1px solid #eee; border-radius: 5px; }
-        .config-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; margin-bottom: 8px; padding: 12px; border-radius: 6px; cursor: grab; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .config-item:active { cursor: grabbing; background: #f0f0f0; }
-        .config-item span { font-weight: bold; font-size: 0.9em; pointer-events: none; }
+        .config-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; margin-bottom: 8px; padding: 12px; border-radius: 6px; cursor: grab; }
 
         #modal, #config-modal, #data-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 2000; width: 88%; border-radius: 10px; max-height: 85vh; overflow-y: auto; }
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 1500; }
@@ -63,11 +56,11 @@
 </div>
 
 <div id="board">
-    <div class="section-header"><span>工作組別 (在營)</span><button onclick="openConfig('group')">⚙️ 管理/排序</button></div>
+    <div class="section-header"><span>工作組別 (在營)</span><button onclick="openConfig('group')">⚙️ 管理</button></div>
     <div id="group-area"></div>
-    <div class="section-header" style="background:#f39c12;"><span>在營事故 (黃)</span><button onclick="openConfig('inCamp')">⚙️ 管理/排序</button></div>
+    <div class="section-header" style="background:#f39c12;"><span>在營事故 (黃)</span><button onclick="openConfig('inCamp')">⚙️ 管理</button></div>
     <div id="in-incident-area"></div>
-    <div class="section-header" style="background:#d32f2f;"><span>不在營事故 (紅)</span><button onclick="openConfig('offCamp')">⚙️ 管理/排序</button></div>
+    <div class="section-header" style="background:#d32f2f;"><span>不在營事故 (紅)</span><button onclick="openConfig('offCamp')">⚙️ 管理</button></div>
     <div id="off-incident-area"></div>
 </div>
 
@@ -85,11 +78,10 @@
 
 <div id="config-modal">
     <h3 id="config-title">管理項目</h3>
-    <p style="font-size: 0.8em; color: #666; margin-top: -10px;">(按住項目可上下拖動排序)</p>
     <div id="config-list"></div>
     <div style="display: flex; gap: 5px;">
         <input type="text" id="new-config-name" placeholder="新增名稱..." style="margin: 0;">
-        <button onclick="addConfigItem()" style="background:#27ae60; color:white; white-space: nowrap;">＋ 新增</button>
+        <button onclick="addConfigItem()" style="background:#27ae60; color:white; white-space: nowrap; padding: 0 15px;">＋ 新增</button>
     </div>
     <button onclick="closeAllModals()" style="width:100%; margin-top: 20px; background: #34495e; color: white; padding: 12px 0;">完成並關閉</button>
 </div>
@@ -114,7 +106,7 @@
 </div>
 
 <script>
-// --- 核心邏輯與名單 ---
+// --- 核心邏輯 ---
 function getRankWeight(rank) {
     let w = 0;
     if (rank.includes('校')) w = 1000; else if (rank.includes('尉')) w = 900;
@@ -140,16 +132,20 @@ const initialPeople = [
     {id: '51', rank: '上兵', name: '宋椘妤', home: '未分類'}, {id: '52', rank: '中士', name: '陳金瑋', home: '未分類'}
 ];
 
-let config = JSON.parse(localStorage.getItem('attendance_config')) || {
+const defaultConfig = {
     group: ["連部組","營部組","通信組","武化組","飛雷組","通保組","CP組","保養排","履車組","輪車組","醫務組","食勤組","預財組","未分類"],
     inCamp: ["補休", "衛哨", "戰情", "調度", "彈藥", "軍械", "割草"],
     offCamp: ["休假", "洽公", "受訓", "支援", "招募", "託管"]
 };
 
+// 讀取並補齊缺失的設定
+let config = JSON.parse(localStorage.getItem('attendance_config')) || defaultConfig;
+config = { ...defaultConfig, ...config }; 
+
 let people = JSON.parse(localStorage.getItem('attendance_people')) || initialPeople;
 let isLocked = false;
 let sortableInstances = [];
-let modalSortable = null; // 用於管理彈窗的排序實體
+let modalSortable = null;
 
 function renderBoard() {
     const gArea = document.getElementById('group-area');
@@ -191,38 +187,29 @@ function initSortable() {
     });
 }
 
-// --- 關鍵修復：管理彈窗的排序功能 ---
-let currentCfgType = '';
+// 管理彈窗
 function openConfig(type) {
     currentCfgType = type;
     const list = document.getElementById('config-list');
     list.innerHTML = '';
     
-    // 渲染目前的清單項目
-    config[type].forEach((it, idx) => {
+    // 關鍵修復：確保 type 存在於 config 中
+    const items = config[type] || [];
+    items.forEach((it, idx) => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'config-item';
-        itemDiv.innerHTML = `
-            <span>☰ ${it}</span>
-            <button onclick="deleteConfigItem(${idx})" style="background:#e74c3c; color:white; border-radius:3px; padding:4px 8px; font-size: 0.8em;">刪除</button>
-        `;
+        itemDiv.innerHTML = `<span>☰ ${it}</span><button onclick="deleteConfigItem(${idx})" style="background:#e74c3c; color:white; border-radius:3px; padding:4px 8px; font-size: 0.8em;">刪除</button>`;
         list.appendChild(itemDiv);
     });
 
-    // 重新初始化 Sortable
     if (modalSortable) modalSortable.destroy();
     modalSortable = new Sortable(list, {
         animation: 150,
-        ghostClass: 'blue-background-class',
         onEnd: () => {
-            // 拖拉結束後，重新讀取畫面上 DOM 的順序，並寫回 config
             const newOrder = [];
-            list.querySelectorAll('.config-item span').forEach(span => {
-                newOrder.push(span.innerText.replace('☰ ', ''));
-            });
+            list.querySelectorAll('.config-item span').forEach(span => { newOrder.push(span.innerText.replace('☰ ', '')); });
             config[currentCfgType] = newOrder;
-            saveAll(); // 存檔
-            renderBoard(); // 主畫面同步更新
+            saveAll(); renderBoard();
         }
     });
 
@@ -233,24 +220,21 @@ function openConfig(type) {
 function addConfigItem() {
     const n = document.getElementById('new-config-name').value;
     if(n) {
+        if(!config[currentCfgType]) config[currentCfgType] = [];
         config[currentCfgType].push(n);
-        saveAll();
-        openConfig(currentCfgType); // 重新渲染清單
-        renderBoard();
+        saveAll(); openConfig(currentCfgType); renderBoard();
         document.getElementById('new-config-name').value = '';
     }
 }
 
 function deleteConfigItem(idx) {
-    if(confirm("確定刪除此項？人員位置可能會重置。")) {
+    if(confirm("確定刪除？")) {
         config[currentCfgType].splice(idx, 1);
-        saveAll();
-        openConfig(currentCfgType);
-        renderBoard();
+        saveAll(); openConfig(currentCfgType); renderBoard();
     }
 }
 
-// --- 其他系統功能 ---
+// 其他系統功能
 function updateCounts() {
     let eO=0, eN=0, eS=0, aO=0, aN=0, aS=0;
     const seenIds = new Set();
