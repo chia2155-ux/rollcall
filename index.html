@@ -153,11 +153,13 @@ function renderBoard() {
     const select = document.getElementById('p-group');
     gArea.innerHTML = ''; inArea.innerHTML = ''; offArea.innerHTML = ''; select.innerHTML = '';
 
+    // 生成組別與事故清單
     config.group.forEach(g => { gArea.innerHTML += `<div class="row"><div class="label">${g}</div><div class="drag-zone" id="zone-${g}"></div></div>`; select.innerHTML += `<option value="${g}">${g}</option>`; });
     config.inCamp.forEach(i => { inArea.innerHTML += `<div class="row in-row"><div class="label">${i}</div><div class="drag-zone" id="zone-${i}"></div></div>`; });
     config.offCamp.forEach(o => { offArea.innerHTML += `<div class="row off-row"><div class="label">${o}</div><div class="drag-zone" id="zone-${o}"></div></div>`; });
 
     const pos = JSON.parse(localStorage.getItem('attendance_pos')) || {};
+    
     people.forEach(p => {
         const card = document.createElement('div');
         const w = getRankWeight(p.rank);
@@ -165,8 +167,18 @@ function renderBoard() {
         card.className = `person-card ${cls}`; card.id = `person-${p.id}`; card.innerText = `${p.rank} ${p.name}`;
         card.setAttribute('data-id', p.id); card.setAttribute('data-weight', w);
         card.onclick = (e) => { if(!isLocked) { e.stopPropagation(); openModal(p); } };
-        const target = document.getElementById(pos[p.id] || `zone-${p.home}`);
-        if(target) target.appendChild(card);
+        
+        // --- 核心修正處：防失蹤邏輯 ---
+        let targetId = pos[p.id] || `zone-${p.home}`;
+        let targetZone = document.getElementById(targetId);
+        
+        // 如果找不到該組別（組別被刪除或改名），就強制塞進第一個工作組別
+        if (!targetZone && config.group.length > 0) {
+            targetId = `zone-${config.group[0]}`;
+            targetZone = document.getElementById(targetId);
+        }
+        
+        if(targetZone) targetZone.appendChild(card);
     });
 
     document.querySelectorAll('.drag-zone').forEach(z => sortChildren(z));
@@ -266,3 +278,4 @@ renderBoard();
 </script>
 </body>
 </html>
+
