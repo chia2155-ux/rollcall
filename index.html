@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數位行動點名板 - 流暢管理版</title>
+    <title>數位行動點名板 - 專業手把版</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root {
@@ -35,7 +35,18 @@
         .btn-container button { padding: 10px 0; border: none; border-radius: 6px; font-weight: bold; font-size: 0.85em; color: white; }
         .full-row { grid-column: span 3; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-        .config-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; margin-bottom: 8px; padding: 12px; border-radius: 6px; cursor: grab; }
+        /* 管理清單樣式優化 */
+        .config-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; margin-bottom: 8px; padding: 8px 12px; border-radius: 6px; }
+        
+        /* 拖拉手把樣式 */
+        .drag-handle { 
+            cursor: grab; 
+            padding: 10px 15px 10px 5px; 
+            color: #999; 
+            font-size: 1.2em;
+            touch-action: none; /* 防止手把觸發原生捲動 */
+        }
+        .config-text { flex-grow: 1; font-weight: bold; font-size: 0.95em; }
 
         #modal, #config-modal, #data-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 2000; width: 88%; border-radius: 10px; max-height: 85vh; overflow-y: auto; }
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 1500; }
@@ -77,7 +88,8 @@
 
 <div id="config-modal">
     <h3 id="config-title">管理項目</h3>
-    <div id="config-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 10px; padding: 5px; border: 1px solid #eee;"></div>
+    <p style="font-size: 0.8em; color: #d32f2f; margin-top: -10px;">(提示：按住 ☰ 符號可拖曳排序)</p>
+    <div id="config-list" style="max-height: 350px; overflow-y: auto; margin-bottom: 10px; padding: 5px; border: 1px solid #eee;"></div>
     <div style="display: flex; gap: 5px;">
         <input type="text" id="new-config-name" placeholder="新增名稱..." style="margin: 0;">
         <button onclick="addConfigItem()" style="background:#27ae60; color:white; white-space: nowrap; padding: 0 15px;">＋ 新增</button>
@@ -105,7 +117,7 @@
 </div>
 
 <script>
-// --- 核心資料與權重 ---
+// --- 核心資料 ---
 function getRankWeight(rank) {
     let w = 0;
     if (rank.includes('校')) w = 1000; else if (rank.includes('尉')) w = 900;
@@ -122,7 +134,7 @@ const initialPeople = [
     {id: '14', rank: '上士', name: '陳雍文', home: '飛雷組'}, {id: '15', rank: '中士', name: '曹亨吉', home: '飛雷組'}, {id: '16', rank: '下士', name: '馮基礎', home: '飛雷組'}, {id: '17', rank: '上兵', name: '趙韋兒', home: '飛雷組'},
     {id: '18', rank: '下士', name: '黃琇平', home: '通保組'}, {id: '19', rank: '一兵', name: '林爚璋', home: '通保組'},
     {id: '20', rank: '上士', name: '林雪豪', home: 'CP組'}, {id: '21', rank: '上士', name: '蘇精翰', home: 'CP組'}, {id: '22', rank: '中士', name: '梁文駿', home: 'CP組'}, {id: '23', rank: '下士', name: '廖雅敏', home: 'CP組'},
-    {id: '24', rank: '少尉', name: '李晉瑋', home: '保養排'}, {id: '25', rank: '士官長', name: '陳昱達', home: '保養排'}, {id: '26', rank: '上士', name: '陳明祥', home: '保養排'}, {id: '27', rank: '上士', name: '王資文', home: '保養排'}, {id: '28', rank: '上士', name: '楊惠雅', home: '保養排'}, {id: '29', rank: '中士', name: '鄭廷忠', home: '保養排'},
+    {id: '24', rank: '少尉', name: '李晉瑋', home: '保養排'}, {id: '25', rank: '士官長', name: '陳昱達', home: '保養排'}, {id: '26', rank: '上士', name: '陳明祥', home: '保養排'}, {id: '27', rank: '上士', name: '王資文', home: '保養排'}, {id: '28', rank: '上士', name: '楊惠雅', home: '保養排'}, {id: '29', rank: '中士', name: '鄭廷忠', home: '鄭廷忠'},
     {id: '30', rank: '上士', name: '崔聯義', home: '履車組'}, {id: '31', rank: '下士', name: '潘一誠', home: '履車組'}, {id: '32', rank: '一兵', name: '鍾豐駿', home: '履車組'},
     {id: '33', rank: '上士', name: '周辰軒', home: '輪車組'}, {id: '34', rank: '中士', name: '劉玟琮', home: '輪車組'}, {id: '35', rank: '下士', name: '梁宸綮', home: '輪車組'}, {id: '36', rank: '下士', name: '唐彥佐', home: '輪車組'}, {id: '37', rank: '一兵', name: '蕭甫暹', home: '輪車組'}, {id: '38', rank: '一兵', name: '龔子宸', home: '輪車組'}, {id: '39', rank: '一兵', name: '巫進昇', home: '輪車組'},
     {id: '40', rank: '中尉', name: '潘冠宇', home: '醫務組'}, {id: '41', rank: '上士', name: '蔡淑賢', home: '醫務組'}, {id: '42', rank: '中士', name: '王建蒝', home: '醫務組'}, {id: '43', rank: '下士', name: '謝佳霖', home: '醫務組'}, {id: '44', rank: '二兵', name: '張秦一哥', home: '醫務組'},
@@ -139,11 +151,10 @@ const defaultConfig = {
 
 let config = JSON.parse(localStorage.getItem('attendance_config')) || defaultConfig;
 config = { ...defaultConfig, ...config }; 
-
 let people = JSON.parse(localStorage.getItem('attendance_people')) || initialPeople;
 let isLocked = false;
 let sortableInstances = [];
-let modalSortable = null; 
+let modalSortable = null;
 
 function renderBoard() {
     const gArea = document.getElementById('group-area');
@@ -185,40 +196,33 @@ function initSortable() {
     });
 }
 
-// --- 關鍵修復：openConfig 每次都會徹底重啟 ---
-let currentCfgType = '';
+// --- 關鍵優化：指定拖拉手把 (handle) ---
 function openConfig(type) {
     currentCfgType = type;
     const list = document.getElementById('config-list');
-    
-    // 1. 強制銷毀舊的 Sortable 實體
-    if (modalSortable) {
-        modalSortable.destroy();
-        modalSortable = null;
-    }
-
-    // 2. 清空並重新渲染內容
+    if (modalSortable) { modalSortable.destroy(); modalSortable = null; }
     list.innerHTML = '';
     const items = config[type] || [];
     items.forEach((it, idx) => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'config-item';
-        itemDiv.innerHTML = `<span>☰ ${it}</span><button onclick="deleteConfigItem(${idx})" style="background:#e74c3c; color:white; border-radius:3px; padding:4px 8px; font-size: 0.8em;">刪除</button>`;
+        itemDiv.innerHTML = `
+            <div class="drag-handle">☰</div>
+            <div class="config-text">${it}</div>
+            <button onclick="deleteConfigItem(${idx})" style="background:#e74c3c; color:white; border-radius:3px; padding:4px 8px; font-size: 0.8em;">刪除</button>
+        `;
         list.appendChild(itemDiv);
     });
 
-    // 3. 延遲一下再啟動新實體，確保 DOM 已渲染完成
     setTimeout(() => {
         modalSortable = new Sortable(list, {
             animation: 150,
+            handle: '.drag-handle', // 只有點擊 drag-handle 類別才能拖拉
             onEnd: () => {
                 const newOrder = [];
-                list.querySelectorAll('.config-item span').forEach(span => { 
-                    newOrder.push(span.innerText.replace('☰ ', '')); 
-                });
+                list.querySelectorAll('.config-text').forEach(el => { newOrder.push(el.innerText); });
                 config[currentCfgType] = newOrder;
-                saveAll(); 
-                renderBoard();
+                saveAll(); renderBoard();
             }
         });
     }, 10);
@@ -232,9 +236,7 @@ function addConfigItem() {
     if(n) {
         if(!config[currentCfgType]) config[currentCfgType] = [];
         config[currentCfgType].push(n);
-        saveAll(); 
-        openConfig(currentCfgType); // 這邊會重新觸發上面的徹底重啟邏輯
-        renderBoard();
+        saveAll(); openConfig(currentCfgType); renderBoard();
         document.getElementById('new-config-name').value = '';
     }
 }
@@ -246,7 +248,6 @@ function deleteConfigItem(idx) {
     }
 }
 
-// 其他系統功能
 function updateCounts() {
     let eO=0, eN=0, eS=0, aO=0, aN=0, aS=0;
     const seenIds = new Set();
@@ -267,13 +268,7 @@ function copyReport() {
 }
 function resetAll() { if(confirm("確定歸隊？")) { localStorage.removeItem('attendance_pos'); renderBoard(); } }
 function saveAll() { localStorage.setItem('attendance_config', JSON.stringify(config)); localStorage.setItem('attendance_people', JSON.stringify(people)); const p={}; document.querySelectorAll('.person-card').forEach(c => p[c.dataset.id]=c.parentElement.id); localStorage.setItem('attendance_pos', JSON.stringify(p)); }
-function closeAllModals() { 
-    document.querySelectorAll('#modal, #config-modal, #data-modal, #overlay').forEach(e => e.style.display='none'); 
-    if(modalSortable) {
-        modalSortable.destroy();
-        modalSortable = null;
-    }
-}
+function closeAllModals() { document.querySelectorAll('#modal, #config-modal, #data-modal, #overlay').forEach(e => e.style.display='none'); if(modalSortable) { modalSortable.destroy(); modalSortable = null; } }
 function openDataModal() { const data = { config, people, pos: JSON.parse(localStorage.getItem('attendance_pos')) || {} }; document.getElementById('data-area').value = JSON.stringify(data); document.getElementById('data-modal').style.display='block'; document.getElementById('overlay').style.display='block'; }
 function importData() { try { const d = JSON.parse(document.getElementById('data-area').value); if(confirm("確定匯入？")) { localStorage.setItem('attendance_config', JSON.stringify(d.config)); localStorage.setItem('attendance_people', JSON.stringify(d.people)); localStorage.setItem('attendance_pos', JSON.stringify(d.pos)); location.reload(); } } catch(e) { alert("格式錯誤！"); } }
 function openModal(p = null) { if(isLocked) return; const delBtn = document.getElementById('btn-delete'); if(p) { document.getElementById('edit-id').value=p.id; document.getElementById('p-rank').value=p.rank; document.getElementById('p-name').value=p.name; document.getElementById('p-group').value=p.home; delBtn.style.display='block'; } else { document.getElementById('edit-id').value=''; document.getElementById('p-rank').value=''; document.getElementById('p-name').value=''; delBtn.style.display='none'; } document.getElementById('modal').style.display='block'; document.getElementById('overlay').style.display='block'; }
