@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數位行動點名板 - 終極流暢版</title>
+    <title>數位行動點名板 - 終極穩定版</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root {
@@ -12,40 +12,42 @@
         }
         body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f5f5f5; margin: 0; padding: 0 8px 160px 8px; }
 
+        /* 統計欄位 */
         .sticky-header { position: sticky; top: 0; z-index: 1000; background-color: #f5f5f5; padding-top: 8px; padding-bottom: 5px; }
         .summary-table { width: 100%; background: #fff; border-collapse: collapse; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; text-align: center; font-size: 0.75em; }
         .summary-table th { background: #34495e; color: white; padding: 4px; }
         .summary-table td { padding: 6px; font-weight: bold; border: 1px solid #eee; }
 
+        /* 區塊樣式 */
         .section-header { display: flex; justify-content: space-between; align-items: center; background: var(--primary); color: white; padding: 5px 12px; margin-top: 12px; border-radius: 5px; }
         .section-header button { background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 2px 8px; font-size: 0.75em; border-radius: 4px; }
-        
         .row { display: flex; background: white; border-bottom: 1px solid #ddd; min-height: 50px; }
         .label { width: 65px; background: var(--group-bg); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75em; text-align: center; border-right: 2px solid #ccc; padding: 4px; flex-shrink: 0; }
         .in-row .label { background: var(--in-camp-bg); }
         .off-row .label { background: var(--off-camp-bg); color: #c62828; }
 
+        /* 磁鐵卡片 */
         .drag-zone { flex-grow: 1; padding: 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 4px; min-height: 40px; }
         .person-card { padding: 5px 2px; border-radius: 3px; font-size: 0.8em; text-align: center; box-shadow: 1px 1px 2px rgba(0,0,0,0.1); font-weight: bold; border: 1px solid rgba(0,0,0,0.05); position: relative; }
         .card-fixed::after { content: "📌"; position: absolute; top: -2px; right: -2px; font-size: 8px; }
-
         .card-officer { background-color: var(--officer); color: white; }
         .card-nco { background-color: var(--nco); color: #222; }
         .card-soldier { background-color: var(--soldier); color: #222; }
 
+        /* 底部按鈕 */
         .btn-container { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 8px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; box-shadow: 0 -2px 15px rgba(0,0,0,0.15); z-index: 1000; }
         .btn-container button { padding: 10px 0; border: none; border-radius: 6px; font-weight: bold; font-size: 0.8em; color: white; }
         .span-2 { grid-column: span 2; }
         .span-3 { grid-column: span 3; }
 
+        /* 彈窗與管理介面 */
         #modal, #config-modal, #data-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 2000; width: 88%; border-radius: 10px; max-height: 85vh; overflow-y: auto; }
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 1500; }
-        input, select, textarea { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
-
-        /* 管理彈窗樣式 */
-        .config-item { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border: 1px solid #ddd; margin-bottom: 8px; padding: 8px 12px; border-radius: 6px; }
-        .drag-handle { cursor: grab; padding: 10px 15px 10px 5px; color: #999; font-size: 1.3em; touch-action: none; }
-        .config-text { flex-grow: 1; font-weight: bold; font-size: 0.9em; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+        
+        .config-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; margin-bottom: 8px; padding: 10px; border-radius: 6px; }
+        .drag-handle { cursor: grab; padding: 10px 15px; color: #999; font-size: 1.2em; touch-action: none; }
+        .config-text { flex-grow: 1; font-weight: bold; font-size: 0.95em; }
     </style>
 </head>
 <body>
@@ -73,21 +75,18 @@
     <button id="lock-btn" onclick="toggleLock()" style="background:#f39c12;">🔓 解鎖</button>
     <button onclick="copyReport()" style="background:#8e44ad;">📋 回報</button>
     <button onclick="openModal()" style="background:#27ae60;">＋ 人員</button>
-    <button onclick="applyFixedZones()" class="span-2" style="background:#d35400;">🏢 固定人員派拔</button>
+    <button onclick="applyFixedZones()" class="span-2" style="background:#d35400;">🏢 固定事故歸隊</button>
     <button onclick="resetAll()" style="background:#2980b9;">⟲ 歸隊</button>
-    <button onclick="openDataModal()" class="span-3" style="background:#34495e;">💾 數據備份 / 移轉</button>
+    <button onclick="openDataModal()" class="span-3" style="background:#34495e;">💾 數據備份 / 轉移</button>
 </div>
 
 <div id="overlay" onclick="closeAllModals()"></div>
 
 <div id="config-modal">
-    <h3 id="modal-title-text">管理項目</h3>
-    <div id="config-list-container">
-        <div id="config-list"></div>
-    </div>
-    <div style="display: flex; gap: 5px; margin-top: 10px;">
+    <h3 id="config-title-text">管理</h3>
+    <div id="config-list-root"></div> <div style="display: flex; gap: 5px; margin-top: 15px;">
         <input type="text" id="new-config-name" placeholder="新增名稱..." style="margin: 0;">
-        <button onclick="addConfigItem()" style="background:#27ae60; color:white; white-space: nowrap; padding: 0 15px; border-radius: 5px;">＋ 新增</button>
+        <button onclick="addConfigItem()" style="background:#27ae60; color:white; white-space:nowrap; padding: 0 15px; border-radius:5px;">＋ 新增</button>
     </div>
     <button onclick="closeAllModals()" style="width:100%; margin-top: 20px; background: #34495e; color: white; padding: 12px 0; border-radius: 6px;">完成並關閉</button>
 </div>
@@ -108,13 +107,13 @@
 <div id="data-modal">
     <h3>備份與移轉</h3>
     <textarea id="data-area"></textarea>
-    <button onclick="importData()" style="background:#d32f2f; color:white; width:100%;">📥 匯入並覆蓋</button>
-    <button onclick="factoryReset()" style="background:#7f8c8d; color:white; width:100%; margin-top: 10px;">🔥 徹底重置 (清空手機暫存)</button>
+    <button onclick="importData()" style="background:#d32f2f; color:white; width:100%; margin-bottom: 10px;">📥 匯入並覆蓋</button>
+    <button onclick="factoryReset()" style="background:#7f8c8d; color:white; width:100%;">🔥 徹底重置 (清空暫存)</button>
     <button onclick="closeAllModals()" style="width:100%; margin-top: 10px;">關閉</button>
 </div>
 
 <script>
-// --- 基礎工具與權重 ---
+// --- 核心邏輯 ---
 function getRankWeight(rank) {
     let w = 0;
     if (rank.includes('校')) w = 1000; else if (rank.includes('尉')) w = 900;
@@ -140,7 +139,6 @@ function renderBoard() {
     const areas = { group: document.getElementById('group-area'), inCamp: document.getElementById('in-incident-area'), offCamp: document.getElementById('off-incident-area') };
     const selectHome = document.getElementById('p-group');
     const selectFixed = document.getElementById('p-fixed');
-    
     Object.values(areas).forEach(a => a.innerHTML = '');
     selectHome.innerHTML = ''; selectFixed.innerHTML = '<option value="">-- 無固定 --</option>';
 
@@ -159,24 +157,18 @@ function renderBoard() {
     });
 
     const pos = JSON.parse(localStorage.getItem('attendance_pos')) || {};
-    const seenIds = new Set();
     people.forEach(p => {
-        if (seenIds.has(p.id)) return;
-        seenIds.add(p.id);
         const card = document.createElement('div');
         const w = getRankWeight(p.rank);
         card.className = `person-card ${w>=900?'card-officer':w>=700?'card-nco':'card-soldier'}${p.fixedZone?' card-fixed':''}`; 
         card.id = `person-${p.id}`; card.innerText = `${p.rank} ${p.name}`;
         card.setAttribute('data-id', p.id); card.setAttribute('data-weight', w);
         card.onclick = (e) => { if(!isLocked) { e.stopPropagation(); openModal(p); } };
-        
         let targetId = pos[p.id] || `zone-${p.home}`;
         let targetZone = document.getElementById(targetId) || document.getElementById(`zone-${config.group[0]}`);
         if(targetZone) targetZone.appendChild(card);
     });
-    document.querySelectorAll('.drag-zone').forEach(z => {
-        Array.from(z.children).sort((a,b) => b.dataset.weight - a.dataset.weight).forEach(i => z.appendChild(i));
-    });
+    document.querySelectorAll('.drag-zone').forEach(z => { Array.from(z.children).sort((a,b) => b.dataset.weight - a.dataset.weight).forEach(i => z.appendChild(i)); });
     initSortable(); updateCounts();
 }
 
@@ -187,30 +179,25 @@ function initSortable() {
     );
 }
 
-// --- 最終修正：完全銷毀並重建管理清單 ---
+// --- 終極修正：物理重建清單區域 ---
 function openConfig(type) {
     currentCfgType = type;
-    const list = document.getElementById('config-list');
+    const root = document.getElementById('config-list-root');
     
-    // 1. 強制銷毀舊的 Sortable 實體
-    if (modalSortable) {
-        modalSortable.destroy();
-        modalSortable = null;
-    }
-    
-    // 2. 徹底清空清單區域的 HTML
-    list.innerHTML = '';
-    
-    // 3. 根據類別重新生成新的 HTML
+    // 1. 強制銷毀現有的 Sortable 實體
+    if (modalSortable) { modalSortable.destroy(); modalSortable = null; }
+
+    // 2. 徹底清空並重建清單容器，給它一個全新的隨機 ID
+    const newId = 'list-' + Math.floor(Math.random() * 1000);
+    root.innerHTML = `<div id="${newId}"></div>`;
+    const list = document.getElementById(newId);
+
+    // 3. 渲染項目
     const items = config[type] || [];
     items.forEach((it, idx) => {
         const div = document.createElement('div');
         div.className = 'config-item';
-        div.innerHTML = `
-            <div class="drag-handle">☰</div>
-            <div class="config-text">${it}</div>
-            <button onclick="deleteCfg(${idx})" style="background:#e74c3c; color:white; border-radius:4px; padding:4px 8px;">刪除</button>
-        `;
+        div.innerHTML = `<div class="drag-handle">☰</div><div class="config-text">${it}</div><button onclick="deleteCfg(${idx})" style="background:#e74c3c;color:white;padding:5px 10px;border-radius:4px;font-size:0.8em;">刪除</button>`;
         list.appendChild(div);
     });
 
@@ -218,51 +205,28 @@ function openConfig(type) {
     document.getElementById('config-modal').style.display = 'block';
     document.getElementById('overlay').style.display = 'block';
 
-    // 5. 核心：使用 setTimeout 確保瀏覽器已完成渲染，再綁定 Sortable
+    // 5. 延遲 300 毫秒再啟動，確保手機瀏覽器完成渲染
     setTimeout(() => {
-        modalSortable = new Sortable(list, {
-            handle: '.drag-handle',
-            animation: 150,
-            forceFallback: true,
+        modalSortable = Sortable.create(list, {
+            handle: '.drag-handle', animation: 150,
             onEnd: () => {
                 const newOrder = [];
                 list.querySelectorAll('.config-text').forEach(el => { newOrder.push(el.innerText); });
                 config[currentCfgType] = newOrder;
-                saveAll();
-                renderBoard();
+                saveAll(); renderBoard();
             }
         });
-    }, 100); 
+    }, 300);
 }
 
-function addConfigItem() {
-    const n = document.getElementById('new-config-name').value;
-    if(n) {
-        config[currentCfgType].push(n);
-        saveAll();
-        openConfig(currentCfgType); // 重新呼叫以刷新清單
-        renderBoard();
-        document.getElementById('new-config-name').value = '';
-    }
-}
-
-function deleteCfg(idx) {
-    if(confirm("確定刪除？")) {
-        config[currentCfgType].splice(idx, 1);
-        saveAll();
-        openConfig(currentCfgType);
-        renderBoard();
-    }
-}
-
-// --- 系統功能 ---
+// --- 其餘系統功能 ---
 function saveAll() {
     localStorage.setItem('attendance_config', JSON.stringify(config));
     localStorage.setItem('attendance_people', JSON.stringify(people));
     const p={}; document.querySelectorAll('.person-card').forEach(c => p[c.dataset.id]=c.parentElement.id);
     localStorage.setItem('attendance_pos', JSON.stringify(p));
 }
-function factoryReset() { if(confirm("這將清空所有資料！確定嗎？")) { localStorage.clear(); location.reload(); } }
+function factoryReset() { if(confirm("確定徹底清空所有名單與設定嗎？")) { localStorage.clear(); location.reload(); } }
 function updateCounts() {
     let eO=0, eN=0, eS=0, aO=0, aN=0, aS=0;
     const seenIds = new Set();
@@ -282,7 +246,7 @@ function copyReport() {
 }
 function resetAll() { if(confirm("確定歸隊？")) { localStorage.removeItem('attendance_pos'); renderBoard(); } }
 function applyFixedZones() { if(confirm("將固定人員移至預設位置？")) { const pos = JSON.parse(localStorage.getItem('attendance_pos'))||{}; people.forEach(p => {if(p.fixedZone) pos[p.id]=p.fixedZone;}); localStorage.setItem('attendance_pos', JSON.stringify(pos)); renderBoard(); } }
-function closeAllModals() { document.querySelectorAll('#modal, #config-modal, #data-modal, #overlay').forEach(e => e.style.display='none'); if(modalSortable) modalSortable.destroy(); }
+function closeAllModals() { document.querySelectorAll('#modal, #config-modal, #data-modal, #overlay').forEach(e => e.style.display='none'); if(modalSortable) { modalSortable.destroy(); modalSortable = null; } }
 function openDataModal() { document.getElementById('data-area').value = JSON.stringify({config, people, pos: JSON.parse(localStorage.getItem('attendance_pos'))||{}}); document.getElementById('data-modal').style.display='block'; document.getElementById('overlay').style.display='block'; }
 function importData() { try { const d = JSON.parse(document.getElementById('data-area').value); localStorage.setItem('attendance_config', JSON.stringify(d.config)); localStorage.setItem('attendance_people', JSON.stringify(d.people)); localStorage.setItem('attendance_pos', JSON.stringify(d.pos)); location.reload(); } catch(e) { alert("格式錯誤！"); } }
 function openModal(p = null) {
@@ -298,6 +262,8 @@ function savePerson() {
     saveAll(); closeAllModals(); renderBoard();
 }
 function deletePerson() { if(confirm("確定刪除？")) { people=people.filter(x=>x.id!==document.getElementById('edit-id').value); saveAll(); closeAllModals(); renderBoard(); } }
+function addConfigItem() { config[currentCfgType].push(document.getElementById('new-config-name').value); saveAll(); openConfig(currentCfgType); renderBoard(); document.getElementById('new-config-name').value=''; }
+function deleteCfg(idx) { config[currentCfgType].splice(idx, 1); saveAll(); openConfig(currentCfgType); renderBoard(); }
 
 renderBoard();
 </script>
