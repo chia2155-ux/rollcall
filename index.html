@@ -3,87 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數位行動點名板 - 全方位自訂版</title>
+    <title>單位數位點名板 - 備份功能版</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root {
-            --group-bg: #e8ecef;
-            --in-camp-bg: #fff9c4;
-            --off-camp-bg: #ffcdd2;
-            --primary: #2c3e50;
-            --officer: #ff5252;
-            --nco: #fbc02d;
-            --soldier: #69f0ae;
+            --group-bg: #e8ecef; --in-camp-bg: #fff9c4; --off-camp-bg: #ffcdd2;
+            --primary: #2c3e50; --officer: #ff5252; --nco: #fbc02d; --soldier: #69f0ae;
         }
+        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f5f5f5; margin: 0; padding: 0 8px 110px 8px; }
 
-        body { 
-            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; 
-            background-color: #f5f5f5; 
-            margin: 0; 
-            padding: 0 8px 100px 8px; 
-        }
-
-        .sticky-header {
-            position: sticky; top: 0; z-index: 1000;
-            background-color: #f5f5f5; padding-top: 8px; padding-bottom: 5px;
-        }
-
-        .summary-table {
-            width: 100%; background: #fff; border-collapse: collapse;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; 
-            overflow: hidden; text-align: center; font-size: 0.75em;
-        }
+        /* 凍結統計欄 */
+        .sticky-header { position: sticky; top: 0; z-index: 1000; background-color: #f5f5f5; padding-top: 8px; padding-bottom: 5px; }
+        .summary-table { width: 100%; background: #fff; border-collapse: collapse; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; text-align: center; font-size: 0.75em; }
         .summary-table th { background: #34495e; color: white; padding: 4px; }
         .summary-table td { padding: 6px; font-weight: bold; border: 1px solid #eee; }
 
-        .section-header {
-            display: flex; justify-content: space-between; align-items: center;
-            background: var(--primary); color: white; padding: 5px 12px;
-            margin-top: 12px; border-radius: 5px;
-        }
+        /* 標題與排版 */
+        .section-header { display: flex; justify-content: space-between; align-items: center; background: var(--primary); color: white; padding: 5px 12px; margin-top: 12px; border-radius: 5px; }
         .section-header button { background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 2px 8px; font-size: 0.75em; }
-
         .row { display: flex; background: white; border-bottom: 1px solid #ddd; min-height: 50px; }
-        .label {
-            width: 65px; background: var(--group-bg); display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 0.75em; text-align: center; border-right: 2px solid #ccc; padding: 4px; flex-shrink: 0;
-        }
+        .label { width: 65px; background: var(--group-bg); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75em; text-align: center; border-right: 2px solid #ccc; padding: 4px; flex-shrink: 0; }
         .in-row .label { background: var(--in-camp-bg); }
         .off-row .label { background: var(--off-camp-bg); }
 
-        .drag-zone { 
-            flex-grow: 1; padding: 8px; display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); /* 關鍵：每列自動填充，最小75px */
-            gap: 4px; min-height: 40px; 
-        }
-
-        .person-card {
-            padding: 5px 2px; border-radius: 3px; font-size: 0.8em; text-align: center;
-            box-shadow: 1px 1px 2px rgba(0,0,0,0.1); font-weight: bold;
-            border: 1px solid rgba(0,0,0,0.05); white-space: nowrap; overflow: hidden;
-        }
+        /* 卡片區域：一排 3-4 個 */
+        .drag-zone { flex-grow: 1; padding: 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 4px; min-height: 40px; }
+        .person-card { padding: 5px 2px; border-radius: 3px; font-size: 0.8em; text-align: center; box-shadow: 1px 1px 2px rgba(0,0,0,0.1); font-weight: bold; border: 1px solid rgba(0,0,0,0.05); }
         .card-officer { background-color: var(--officer); color: white; }
         .card-nco { background-color: var(--nco); color: #222; }
         .card-soldier { background-color: var(--soldier); color: #222; }
 
-        .btn-container {
-            position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 8px;
-            display: flex; justify-content: space-around; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000;
-        }
-        button { padding: 8px 10px; border: none; border-radius: 5px; font-weight: bold; font-size: 0.85em; }
-        
-        #modal, #config-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 2000; width: 85%; border-radius: 10px; }
+        /* 底部按鈕 */
+        .btn-container { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 8px 4px; display: grid; grid-template-columns: 1fr 1.2fr 1fr 1fr; gap: 4px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+        .btn-container button { padding: 8px 0; border: none; border-radius: 5px; font-weight: bold; font-size: 0.8em; color: white; }
+
+        /* 彈窗 */
+        #modal, #config-modal, #data-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 2000; width: 88%; border-radius: 10px; max-height: 85vh; overflow-y: auto; }
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 1500; }
-        input, select { width: 100%; padding: 8px; margin: 8px 0; box-sizing: border-box; }
+        textarea { width: 100%; height: 150px; font-family: monospace; font-size: 10px; margin: 10px 0; }
+        .config-item { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border: 1px solid #ddd; margin-bottom: 8px; padding: 10px; border-radius: 5px; cursor: move; }
     </style>
 </head>
 <body class="unlocked">
 
 <div class="sticky-header">
     <table class="summary-table">
-        <thead>
-            <tr><th>項目</th><th>軍</th><th>士</th><th>兵</th><th>總計</th></tr>
-        </thead>
+        <thead><tr><th>項目</th><th>軍</th><th>士</th><th>兵</th><th>總計</th></tr></thead>
         <tbody>
             <tr class="row-header"><td>應到</td><td id="exp-off">0</td><td id="exp-nco">0</td><td id="exp-sol">0</td><td id="exp-total">0</td></tr>
             <tr style="color: #2980b9;"><td>在營</td><td id="act-off">0</td><td id="act-nco">0</td><td id="act-sol">0</td><td id="act-total">0</td></tr>
@@ -92,89 +57,87 @@
 </div>
 
 <div id="board">
-    <div class="section-header">
-        <span>工作組別 (在營)</span>
-        <button onclick="openConfig('group')">⚙️ 管理</button>
-    </div>
+    <div class="section-header"><span>工作組別 (在營)</span><button onclick="openConfig('group')">⚙️ 管理</button></div>
     <div id="group-area"></div>
-
-    <div class="section-header" style="background:#f39c12;">
-        <span>在營事故 (黃)</span>
-        <button onclick="openConfig('inCamp')">⚙️ 管理</button>
-    </div>
+    <div class="section-header" style="background:#f39c12;"><span>在營事故 (黃)</span><button onclick="openConfig('inCamp')">⚙️ 管理</button></div>
     <div id="in-incident-area"></div>
-
-    <div class="section-header" style="background:#d32f2f;">
-        <span>不在營事故 (紅)</span>
-        <button onclick="openConfig('offCamp')">⚙️ 管理</button>
-    </div>
+    <div class="section-header" style="background:#d32f2f;"><span>不在營事故 (紅)</span><button onclick="openConfig('offCamp')">⚙️ 管理</button></div>
     <div id="off-incident-area"></div>
 </div>
 
 <div class="btn-container">
-    <button id="lock-btn" onclick="toggleLock()" style="background:#f39c12; color:white;">🔓 解鎖</button>
-    <button onclick="copyReport()" style="background:#8e44ad; color:white;">📋 回報</button>
-    <button onclick="openModal()" style="background:#27ae60; color:white;">＋ 人員</button>
-    <button onclick="resetAll()" style="background:#2980b9; color:white;">⟲ 歸隊</button>
+    <button id="lock-btn" onclick="toggleLock()" style="background:#f39c12;">🔓 解鎖</button>
+    <button onclick="copyReport()" style="background:#8e44ad;">📋 回報</button>
+    <button onclick="openModal()" style="background:#27ae60;">＋ 人員</button>
+    <button onclick="openDataModal()" style="background:#2980b9;">💾 備份</button>
 </div>
 
 <div id="overlay" onclick="closeAllModals()"></div>
 <div id="modal">
-    <h3 id="modal-title">人員管理</h3>
+    <h3>人員管理</h3>
     <input type="hidden" id="edit-id">
-    <input type="text" id="p-rank" placeholder="階級">
-    <input type="text" id="p-name" placeholder="姓名">
+    <input type="text" id="p-rank" placeholder="階級"><input type="text" id="p-name" placeholder="姓名">
     <label>預設組別：</label><select id="p-group"></select>
-    <div style="display: flex; justify-content: space-between;">
+    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
         <button onclick="savePerson()" style="background:#27ae60; color:white;">儲存</button>
-        <button id="btn-delete" onclick="deletePerson()" style="background:#e74c3c; color:white; display:none;">刪除</button>
+        <button id="btn-delete" onclick="deletePerson()" style="background:#e74c3c; color:white;">刪除</button>
         <button onclick="closeAllModals()">取消</button>
     </div>
 </div>
 
 <div id="config-modal">
-    <h3 id="config-title">管理</h3>
-    <div id="config-list" style="max-height: 200px; overflow-y: auto; margin-bottom: 10px;"></div>
+    <h3 id="config-title">管理順序 (可拖曳)</h3>
+    <div id="config-list"></div>
     <input type="text" id="new-config-name" placeholder="新增名稱...">
-    <button onclick="addConfigItem()" style="background:#27ae60; color:white; width:100%;">＋ 新增項目</button>
-    <hr>
-    <button onclick="closeAllModals()" style="width:100%;">完成</button>
+    <button onclick="addConfigItem()" style="background:#27ae60; color:white; width:100%; margin: 5px 0;">＋ 新增</button>
+    <button onclick="closeAllModals()" style="width:100%; margin-top: 10px;">完成</button>
+</div>
+
+<div id="data-modal">
+    <h3>備份與移轉</h3>
+    <p style="font-size: 11px; color: #666;">複製下方代碼可存檔或傳給別人；貼上代碼並按匯入可同步名單。</p>
+    <textarea id="data-area"></textarea>
+    <button onclick="importData()" style="background:#d32f2f; color:white; width:100%;">📥 匯入資料 (覆蓋目前名單)</button>
+    <button onclick="closeAllModals()" style="width:100%; margin-top: 10px;">關閉</button>
 </div>
 
 <script>
-// --- 排序權重設定 ---
-const rankPriority = {
-    '校': 100, '尉': 90, '少': 90, '中': 85, '士官長': 80, '士': 70, '長': 70, '兵': 60
-};
+// --- 階級權重 ---
 function getRankWeight(rank) {
-    let weight = 0;
-    if (rank.includes('校')) weight = 1000;
-    else if (rank.includes('尉')) weight = 900;
-    else if (rank.includes('士官長')) weight = 800;
-    else if (rank.includes('士')) weight = 700;
-    else if (rank.includes('兵')) weight = 600;
-
-    if (rank.includes('上')) weight += 3;
-    else if (rank.includes('中')) weight += 2;
-    else if (rank.includes('下') || rank.includes('一')) weight += 1;
-    return weight;
+    let w = 0;
+    if (rank.includes('校')) w = 1000; else if (rank.includes('尉')) w = 900;
+    else if (rank.includes('士官長')) w = 800; else if (rank.includes('士')) w = 700; else if (rank.includes('兵')) w = 600;
+    if (rank.includes('上')) w += 3; else if (rank.includes('中')) w += 2; else if (rank.includes('下') || rank.includes('一')) w += 1;
+    return w;
 }
 
-// --- 初始化設定 ---
+// --- 資料恢復邏輯 ---
+const initialPeople = [
+    {id: '1', rank: '上尉', name: '劉炫良', home: '連部組'}, {id: '2', rank: '上尉', name: '劉恆齊', home: '連部組'}, {id: '3', rank: '上尉', name: '林峻鴻', home: '連部組'}, {id: '4', rank: '上兵', name: '李敏豪', home: '連部組'}, {id: '5', rank: '一兵', name: '莊迦程', home: '連部組'},
+    {id: '6', rank: '上士', name: '林庭君', home: '營部組'}, {id: '7', rank: '中士', name: '羅子建', home: '營部組'}, {id: '8', rank: '上兵', name: '林哲男', home: '營部組'}, {id: '9', rank: '上兵', name: '吳琪鈺', home: '營部組'},
+    {id: '10', rank: '中士', name: '吳仕洋', home: '通信組'}, {id: '11', rank: '下士', name: '張原瑜', home: '通信組'},
+    {id: '12', rank: '上士', name: '謝倉玄', home: '武化組'}, {id: '13', rank: '下士', name: '潘聖隆', home: '武化組'},
+    {id: '14', rank: '上士', name: '陳雍文', home: '飛雷組'}, {id: '15', rank: '中士', name: '曹亨吉', home: '飛雷組'}, {id: '16', rank: '下士', name: '馮基礎', home: '飛雷組'}, {id: '17', rank: '上兵', name: '趙韋兒', home: '飛雷組'},
+    {id: '18', rank: '下士', name: '黃琇平', home: '通保組'}, {id: '19', rank: '一兵', name: '林爚璋', home: '通保組'},
+    {id: '20', rank: '上士', name: '林雪豪', home: 'CP組'}, {id: '21', rank: '上士', name: '蘇精翰', home: 'CP組'}, {id: '22', rank: '中士', name: '梁文駿', home: 'CP組'}, {id: '23', rank: '下士', name: '廖雅敏', home: 'CP組'},
+    {id: '24', rank: '少尉', name: '李晉瑋', home: '保養排'}, {id: '25', rank: '士官長', name: '陳昱達', home: '保養排'}, {id: '26', rank: '上士', name: '陳明祥', home: '保養排'}, {id: '27', rank: '上士', name: '王資文', home: '保養排'}, {id: '28', rank: '上士', name: '楊惠雅', home: '保養排'}, {id: '29', rank: '中士', name: '鄭廷忠', home: '保養排'},
+    {id: '30', rank: '上士', name: '崔聯義', home: '履車組'}, {id: '31', rank: '下士', name: '潘一誠', home: '履車組'}, {id: '32', rank: '一兵', name: '鍾豐駿', home: '履車組'},
+    {id: '33', rank: '上士', name: '周辰軒', home: '輪車組'}, {id: '34', rank: '中士', name: '劉玟琮', home: '輪車組'}, {id: '35', rank: '下士', name: '梁宸綮', home: '輪車組'}, {id: '36', rank: '下士', name: '唐彥佐', home: '輪車組'}, {id: '37', rank: '一兵', name: '蕭甫暹', home: '輪車組'}, {id: '38', rank: '一兵', name: '龔子宸', home: '輪車組'}, {id: '39', rank: '一兵', name: '巫進昇', home: '輪車組'},
+    {id: '40', rank: '中尉', name: '潘冠宇', home: '醫務組'}, {id: '41', rank: '上士', name: '蔡淑賢', home: '醫務組'}, {id: '42', rank: '中士', name: '王建蒝', home: '醫務組'}, {id: '43', rank: '下士', name: '謝佳霖', home: '醫務組'}, {id: '44', rank: '二兵', name: '張秦一哥', home: '醫務組'},
+    {id: '45', rank: '中士', name: '劉哲男', home: '食勤組'}, {id: '46', rank: '上兵', name: '李建祥', home: '食勤組'}, {id: '47', rank: '上兵', name: '林進雄', home: '食勤組'},
+    {id: '48', rank: '上士', name: '楊憲霖', home: '預財組'}, {id: '49', rank: '中士', name: '廖文旗', home: '預財組'}, {id: '50', rank: '中士', name: '樂誠得', home: '預財組'},
+    {id: '51', rank: '上兵', name: '宋椘妤', home: '未分類'}, {id: '52', rank: '中士', name: '陳金瑋', home: '未分類'}
+];
+
 let config = JSON.parse(localStorage.getItem('attendance_config')) || {
     group: ["連部組","營部組","通信組","武化組","飛雷組","通保組","CP組","保養排","履車組","輪車組","醫務組","食勤組","預財組"],
     inCamp: ["補休", "衛哨", "戰情", "調度", "彈藥", "軍械", "割草"],
     offCamp: ["休假", "洽公", "受訓", "支援", "招募", "託管"]
 };
 
-let people = JSON.parse(localStorage.getItem('attendance_people')) || [
-    {id: '1', rank: '上尉', name: '劉炫良', home: '連部組'}, {id: '2', rank: '上尉', name: '劉恆齊', home: '連部組'}, {id: '3', rank: '上尉', name: '林峻鴻', home: '連部組'}, {id: '4', rank: '上兵', name: '李敏豪', home: '連部組'}, {id: '5', rank: '一兵', name: '莊迦程', home: '連部組'},
-    {id: '6', rank: '上士', name: '林庭君', home: '營部組'}, {id: '7', rank: '中士', name: '羅子建', home: '營部組'}, {id: '8', rank: '上兵', name: '林哲男', home: '營部組'}, {id: '9', rank: '上兵', name: '吳琪鈺', home: '營部組'},
-    {id: '12', rank: '上士', name: '謝倉玄', home: '武化組'}, {id: '13', rank: '下士', name: '潘聖隆', home: '武化組'}
-];
-
+let people = JSON.parse(localStorage.getItem('attendance_people')) || initialPeople;
 let isLocked = false;
-let currentConfigType = '';
+let sortableInstances = [];
 
 function renderBoard() {
     const gArea = document.getElementById('group-area');
@@ -183,167 +146,104 @@ function renderBoard() {
     const select = document.getElementById('p-group');
     gArea.innerHTML = ''; inArea.innerHTML = ''; offArea.innerHTML = ''; select.innerHTML = '';
 
-    config.group.forEach(g => {
-        gArea.innerHTML += `<div class="row"><div class="label">${g}</div><div class="drag-zone" id="zone-${g}"></div></div>`;
-        select.innerHTML += `<option value="${g}">${g}</option>`;
-    });
+    config.group.forEach(g => { gArea.innerHTML += `<div class="row"><div class="label">${g}</div><div class="drag-zone" id="zone-${g}"></div></div>`; select.innerHTML += `<option value="${g}">${g}</option>`; });
     config.inCamp.forEach(i => { inArea.innerHTML += `<div class="row in-row"><div class="label">${i}</div><div class="drag-zone" id="zone-${i}"></div></div>`; });
     config.offCamp.forEach(o => { offArea.innerHTML += `<div class="row off-row"><div class="label">${o}</div><div class="drag-zone" id="zone-${o}"></div></div>`; });
 
-    const savedPos = JSON.parse(localStorage.getItem('attendance_pos')) || {};
+    const pos = JSON.parse(localStorage.getItem('attendance_pos')) || {};
     people.forEach(p => {
-        const card = createCard(p);
-        const currentZoneId = savedPos[p.id] || `zone-${p.home}`;
-        const targetZone = document.getElementById(currentZoneId);
-        if (targetZone) targetZone.appendChild(card);
+        const card = document.createElement('div');
+        const w = getRankWeight(p.rank);
+        let cls = 'card-soldier'; if(w>=900) cls='card-officer'; else if(w>=700) cls='card-nco';
+        card.className = `person-card ${cls}`; card.id = `person-${p.id}`; card.innerText = `${p.rank} ${p.name}`;
+        card.setAttribute('data-id', p.id); card.setAttribute('data-weight', w);
+        card.onclick = (e) => { if(!isLocked) { e.stopPropagation(); openModal(p); } };
+        const target = document.getElementById(pos[p.id] || `zone-${p.home}`);
+        if(target) target.appendChild(card);
     });
 
-    document.querySelectorAll('.drag-zone').forEach(zone => sortChildren(zone));
-    initSortable();
-    updateCounts();
+    document.querySelectorAll('.drag-zone').forEach(z => sortChildren(z));
+    initSortable(); updateCounts();
 }
 
-function createCard(p) {
-    const card = document.createElement('div');
-    const weight = getRankWeight(p.rank);
-    let cls = 'card-soldier';
-    if (weight >= 900) cls = 'card-officer';
-    else if (weight >= 700) cls = 'card-nco';
-    
-    card.className = `person-card ${cls}`;
-    card.id = `person-${p.id}`;
-    card.innerText = `${p.rank} ${p.name}`;
-    card.setAttribute('data-id', p.id);
-    card.setAttribute('data-weight', weight);
-    card.onclick = (e) => { if(!isLocked) { e.stopPropagation(); openModal(p); } };
-    return card;
-}
-
-function sortChildren(container) {
-    const items = Array.from(container.children);
-    items.sort((a, b) => b.getAttribute('data-weight') - a.getAttribute('data-weight'));
-    items.forEach(item => container.appendChild(item));
+function sortChildren(c) {
+    Array.from(c.children).sort((a,b) => b.dataset.weight - a.dataset.weight).forEach(i => c.appendChild(i));
 }
 
 function initSortable() {
-    document.querySelectorAll('.drag-zone').forEach(zone => {
-        new Sortable(zone, {
-            group: 'attendance', animation: 150, scroll: true, forceFallback: true,
-            disabled: isLocked,
-            onEnd: (evt) => { 
-                sortChildren(evt.to); 
-                saveAllPositions(); 
-                updateCounts(); 
-            }
-        });
+    sortableInstances.forEach(i => i.destroy()); sortableInstances = [];
+    document.querySelectorAll('.drag-zone').forEach(z => {
+        sortableInstances.push(new Sortable(z, { group: 'attendance', animation: 150, scroll: true, forceFallback: true, disabled: isLocked, onEnd: (e) => { sortChildren(e.to); saveAll(); updateCounts(); } }));
     });
-}
-
-// --- 區域管理功能 ---
-function openConfig(type) {
-    currentConfigType = type;
-    document.getElementById('config-title').innerText = "管理項目";
-    const list = document.getElementById('config-list');
-    list.innerHTML = '';
-    config[type].forEach((item, index) => {
-        list.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-            <span>${item}</span>
-            <button onclick="deleteConfigItem(${index})" style="background:#e74c3c; color:white; padding:2px 5px;">刪除</button>
-        </div>`;
-    });
-    document.getElementById('config-modal').style.display = 'block';
-    document.getElementById('overlay').style.display = 'block';
-}
-
-function addConfigItem() {
-    const name = document.getElementById('new-config-name').value;
-    if(!name) return;
-    config[currentConfigType].push(name);
-    localStorage.setItem('attendance_config', JSON.stringify(config));
-    document.getElementById('new-config-name').value = '';
-    openConfig(currentConfigType);
-    renderBoard();
-}
-
-function deleteConfigItem(index) {
-    if(confirm("刪除該項目可能導致人員位置重置，確定嗎？")) {
-        config[currentConfigType].splice(index, 1);
-        localStorage.setItem('attendance_config', JSON.stringify(config));
-        openConfig(currentConfigType);
-        renderBoard();
-    }
-}
-
-// --- 其他功能函數 (鎖定、統計、回報等) ---
-function toggleLock() {
-    isLocked = !isLocked;
-    const btn = document.getElementById('lock-btn');
-    btn.innerText = isLocked ? "🔒 鎖定中" : "🔓 解鎖中";
-    renderBoard();
 }
 
 function updateCounts() {
-    let eOff = 0, eNco = 0, eSol = 0;
-    let aOff = 0, aNco = 0, aSol = 0;
-    people.forEach(p => {
-        const w = getRankWeight(p.rank);
-        if (w >= 900) eOff++; else if (w >= 700) eNco++; else eSol++;
+    let eO=0, eN=0, eS=0, aO=0, aN=0, aS=0;
+    people.forEach(p => { const w=getRankWeight(p.rank); if(w>=900) eO++; else if(w>=700) eN++; else eS++; });
+    document.querySelectorAll('.person-card').forEach(c => {
+        const p = people.find(x => x.id === c.dataset.id); const zid = c.parentElement.id.replace('zone-','');
+        if(config.group.includes(zid) || config.inCamp.includes(zid)) { const w=getRankWeight(p.rank); if(w>=900) aO++; else if(w>=700) aN++; else aS++; }
     });
-    document.querySelectorAll('.person-card').forEach(card => {
-        const pId = card.getAttribute('data-id');
-        const p = people.find(x => x.id === pId);
-        const zoneId = card.parentElement.id.replace('zone-', '');
-        if (config.group.includes(zoneId) || config.inCamp.includes(zoneId)) {
-            const w = getRankWeight(p.rank);
-            if (w >= 900) aOff++; else if (w >= 700) aNco++; else aSol++;
-        }
-    });
-    document.getElementById('exp-off').innerText = eOff; document.getElementById('exp-nco').innerText = eNco; document.getElementById('exp-sol').innerText = eSol; document.getElementById('exp-total').innerText = eOff+eNco+eSol;
-    document.getElementById('act-off').innerText = aOff; document.getElementById('act-nco').innerText = aNco; document.getElementById('act-sol').innerText = aSol; document.getElementById('act-total').innerText = aOff+aNco+aSol;
+    document.getElementById('exp-off').innerText=eO; document.getElementById('exp-nco').innerText=eN; document.getElementById('exp-sol').innerText=eS; document.getElementById('exp-total').innerText=eO+eN+eS;
+    document.getElementById('act-off').innerText=aO; document.getElementById('act-nco').innerText=aN; document.getElementById('act-sol').innerText=aS; document.getElementById('act-total').innerText=aO+aN+aS;
 }
+
+function toggleLock() { isLocked = !isLocked; document.getElementById('lock-btn').innerText = isLocked ? "🔒 鎖定" : "🔓 解鎖"; renderBoard(); }
 
 function copyReport() {
     let r = `【${new Date().getMonth()+1}/${new Date().getDate()} 回報】\n應到：軍${document.getElementById('exp-off').innerText} 士${document.getElementById('exp-nco').innerText} 兵${document.getElementById('exp-sol').innerText} (${document.getElementById('exp-total').innerText})\n在營：軍${document.getElementById('act-off').innerText} 士${document.getElementById('act-nco').innerText} 兵${document.getElementById('act-sol').innerText} (${document.getElementById('act-total').innerText})\n`;
-    config.offCamp.forEach(o => {
-        const cards = document.getElementById(`zone-${o}`).querySelectorAll('.person-card');
-        if(cards.length > 0) r += `● ${o}(${cards.length}員)：${Array.from(cards).map(c=>c.innerText.split(' ')[1]).join('、')}\n`;
-    });
-    const el = document.createElement('textarea'); el.value = r; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-    alert("已複製！");
+    config.offCamp.forEach(o => { const cs = document.getElementById(`zone-${o}`).querySelectorAll('.person-card'); if(cs.length>0) r += `● ${o}(${cs.length}員)：${Array.from(cs).map(c=>c.innerText.split(' ')[1]).join('、')}\n`; });
+    navigator.clipboard.writeText(r); alert("回報已複製！");
 }
 
-function saveAllPositions() {
-    const pos = {};
-    document.querySelectorAll('.person-card').forEach(card => { pos[card.getAttribute('data-id')] = card.parentElement.id; });
-    localStorage.setItem('attendance_pos', JSON.stringify(pos));
-    localStorage.setItem('attendance_people', JSON.stringify(people));
+// --- 備份功能 ---
+function openDataModal() {
+    const data = { config, people, pos: JSON.parse(localStorage.getItem('attendance_pos')) || {} };
+    document.getElementById('data-area').value = JSON.stringify(data);
+    document.getElementById('data-modal').style.display='block'; document.getElementById('overlay').style.display='block';
 }
 
-function closeAllModals() { document.getElementById('modal').style.display='none'; document.getElementById('config-modal').style.display='none'; document.getElementById('overlay').style.display='none'; }
+function importData() {
+    try {
+        const d = JSON.parse(document.getElementById('data-area').value);
+        if(confirm("匯入將覆蓋目前所有資料，確定嗎？")) {
+            localStorage.setItem('attendance_config', JSON.stringify(d.config));
+            localStorage.setItem('attendance_people', JSON.stringify(d.people));
+            localStorage.setItem('attendance_pos', JSON.stringify(d.pos));
+            location.reload();
+        }
+    } catch(e) { alert("代碼格式錯誤！"); }
+}
+
+// --- 區域管理 ---
+let currentCfgType = '';
+function openConfig(type) {
+    currentCfgType = type; const list = document.getElementById('config-list'); list.innerHTML = '';
+    config[type].forEach((it, idx) => { list.innerHTML += `<div class="config-item"><span>☰ ${it}</span><button onclick="delCfg(${idx})" style="background:#e74c3c; color:white;">刪除</button></div>`; });
+    new Sortable(list, { animation: 150, onEnd: () => {
+        config[currentCfgType] = Array.from(list.querySelectorAll('span')).map(s => s.innerText.replace('☰ ',''));
+        saveAll(); renderBoard();
+    }});
+    document.getElementById('config-modal').style.display='block'; document.getElementById('overlay').style.display='block';
+}
+function addCfg() { const n = document.getElementById('new-config-name').value; if(n) { config[currentCfgType].push(n); saveAll(); openConfig(currentCfgType); renderBoard(); document.getElementById('new-config-name').value=''; } }
+function delCfg(idx) { config[currentCfgType].splice(idx, 1); saveAll(); openConfig(currentCfgType); renderBoard(); }
+
+function saveAll() { localStorage.setItem('attendance_config', JSON.stringify(config)); localStorage.setItem('attendance_people', JSON.stringify(people)); const p={}; document.querySelectorAll('.person-card').forEach(c => p[c.dataset.id]=c.parentElement.id); localStorage.setItem('attendance_pos', JSON.stringify(p)); }
+function closeAllModals() { document.querySelectorAll('#modal, #config-modal, #data-modal, #overlay').forEach(e => e.style.display='none'); }
 function openModal(p = null) {
     const delBtn = document.getElementById('btn-delete');
-    if (p) {
-        document.getElementById('edit-id').value = p.id; document.getElementById('p-rank').value = p.rank; document.getElementById('p-name').value = p.name; document.getElementById('p-group').value = p.home; delBtn.style.display = "block";
-    } else {
-        document.getElementById('edit-id').value = ""; document.getElementById('p-rank').value = ""; document.getElementById('p-name').value = ""; delBtn.style.display = "none";
-    }
-    document.getElementById('modal').style.display = 'block'; document.getElementById('overlay').style.display = 'block';
+    if(p) { document.getElementById('edit-id').value=p.id; document.getElementById('p-rank').value=p.rank; document.getElementById('p-name').value=p.name; document.getElementById('p-group').value=p.home; delBtn.style.display='block'; }
+    else { document.getElementById('edit-id').value=''; document.getElementById('p-rank').value=''; document.getElementById('p-name').value=''; delBtn.style.display='none'; }
+    document.getElementById('modal').style.display='block'; document.getElementById('overlay').style.display='block';
 }
 function savePerson() {
-    const id = document.getElementById('edit-id').value;
-    const rank = document.getElementById('p-rank').value;
-    const name = document.getElementById('p-name').value;
-    const home = document.getElementById('p-group').value;
-    if (id) {
-        const i = people.findIndex(x => x.id === id); people[i] = { id, rank, name, home };
-    } else {
-        people.push({ id: Date.now().toString(), rank, name, home });
-    }
-    localStorage.setItem('attendance_people', JSON.stringify(people));
-    closeAllModals(); renderBoard();
+    const id=document.getElementById('edit-id').value, r=document.getElementById('p-rank').value, n=document.getElementById('p-name').value, h=document.getElementById('p-group').value;
+    if(id) { const i=people.findIndex(x=>x.id===id); people[i]={id, rank:r, name:n, home:h}; } else { people.push({id:Date.now().toString(), rank:r, name:n, home:h}); }
+    saveAll(); closeAllModals(); renderBoard();
 }
-function deletePerson() { if(confirm("確定刪除？")) { const id = document.getElementById('edit-id').value; people = people.filter(x => x.id !== id); localStorage.setItem('attendance_people', JSON.stringify(people)); closeAllModals(); renderBoard(); } }
-function resetAll() { if(confirm("歸隊？")) { localStorage.removeItem('attendance_pos'); renderBoard(); } }
+function deletePerson() { if(confirm("確定刪除？")) { people=people.filter(x=>x.id!==document.getElementById('edit-id').value); saveAll(); closeAllModals(); renderBoard(); } }
+function resetAll() { if(confirm("確定歸隊？")) { localStorage.removeItem('attendance_pos'); renderBoard(); } }
 
 renderBoard();
 </script>
