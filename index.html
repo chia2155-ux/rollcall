@@ -12,14 +12,14 @@
         }
         body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f5f5f5; margin: 0; padding: 0 8px 150px 8px; }
 
-        /* 統計與搜尋區域 */
+        /* 凍結區域 */
         .sticky-header { position: sticky; top: 0; z-index: 1000; background-color: #f5f5f5; padding-top: 8px; padding-bottom: 5px; }
         .summary-table { width: 100%; background: #fff; border-collapse: collapse; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; text-align: center; font-size: 0.75em; margin-bottom: 5px; }
         .summary-table th { background: #34495e; color: white; padding: 4px; }
         .summary-table td { padding: 6px; font-weight: bold; border: 1px solid #eee; }
 
-        /* 搜尋框 */
-        #search-bar-container { display: none; margin-bottom: 8px; }
+        /* 搜尋框容器 */
+        #search-bar-container { display: none; margin-bottom: 8px; position: relative; }
         .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 20px; font-size: 14px; box-sizing: border-box; outline: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
         /* 看板樣式 */
@@ -49,7 +49,7 @@
         .drag-handle { cursor: grab; padding: 10px; color: #999; font-size: 1.2em; touch-action: none; }
     </style>
 </head>
-<body onclick="handleGlobalClick(event)">
+<body onclick="autoHideSearch()">
 
 <div class="sticky-header">
     <table class="summary-table">
@@ -60,7 +60,7 @@
         </tbody>
     </table>
     <div id="search-bar-container" onclick="event.stopPropagation()">
-        <input type="text" id="search-box" class="search-input" placeholder="🔍 搜尋姓名或階級..." oninput="filterPeople()">
+        <input type="text" id="search-box" class="search-input" placeholder="🔍 搜尋姓名或階級..." oninput="filterPeople()" onblur="autoHideSearch()">
     </div>
 </div>
 
@@ -117,7 +117,7 @@
 </div>
 
 <script>
-// --- 基礎變數與權重 ---
+// --- 基礎變數 ---
 const initialPeople = []; 
 const defaultConfig = {
     group: ["連部組","營部組","通信組","武化組","飛雷組","通保組","CP組","保養排","履車組","輪車組","醫務組","食勤組","預財組","未分類"],
@@ -136,7 +136,7 @@ function getRankWeight(rank) {
     return w;
 }
 
-// --- 搜尋邏輯優化 ---
+// --- 智慧搜尋收合邏輯 ---
 function toggleSearch(e) {
     if(e) e.stopPropagation();
     const bar = document.getElementById('search-bar-container');
@@ -145,11 +145,11 @@ function toggleSearch(e) {
     if(isHidden) document.getElementById('search-box').focus();
 }
 
-function handleGlobalClick(e) {
-    const bar = document.getElementById('search-bar-container');
+function autoHideSearch() {
     const box = document.getElementById('search-box');
-    // 如果搜尋框開啟中，且點擊外部，且搜尋框沒字 -> 自動收起
-    if (bar.style.display === 'block' && box.value === '') {
+    const bar = document.getElementById('search-bar-container');
+    // 如果裡面沒有字，就自動關閉搜尋框
+    if (box.value === "") {
         bar.style.display = 'none';
     }
 }
@@ -161,26 +161,12 @@ function filterPeople() {
     });
 }
 
-// --- 彈窗關閉邏輯：檢查搜尋框 ---
-function closeAllModals() {
-    document.querySelectorAll('#modal, #config-modal, #data-modal, #overlay').forEach(e => e.style.display='none');
-    if (modalSortable) { modalSortable.destroy(); modalSortable = null; }
-    
-    // 智慧收合：如果搜尋框是空的，關閉其他彈窗時順便把搜尋框收起來
-    const box = document.getElementById('search-box');
-    const bar = document.getElementById('search-bar-container');
-    if (box.value === '') {
-        bar.style.display = 'none';
-    }
-}
-
-// --- 管理功能：穩定掛載版本 ---
+// --- 管理功能 ---
 function openConfig(type) {
     currentCfgType = type;
     const root = document.getElementById('config-list-root');
     if (modalSortable) { modalSortable.destroy(); modalSortable = null; }
     root.innerHTML = '';
-    
     const listId = 'list-' + Date.now();
     const newList = document.createElement('div');
     newList.id = listId;
@@ -189,11 +175,7 @@ function openConfig(type) {
     (config[type] || []).forEach((it, idx) => {
         const item = document.createElement('div');
         item.className = 'config-item';
-        item.innerHTML = `
-            <div class="drag-handle">☰</div>
-            <div class="cfg-txt" style="flex-grow:1; font-weight:bold;">${it}</div>
-            <button onclick="deleteCfg(${idx})" style="background:#e74c3c; color:white; padding:5px 8px; border-radius:4px; font-size:0.8em;">刪除</button>
-        `;
+        item.innerHTML = `<div class="drag-handle">☰</div><div class="cfg-txt" style="flex-grow:1; font-weight:bold;">${it}</div><button onclick="deleteCfg(${idx})" style="background:#e74c3c; color:white; padding:5px 8px; border-radius:4px; font-size:0.8em;">刪除</button>`;
         newList.appendChild(item);
     });
 
@@ -256,7 +238,13 @@ function renderBoard() {
 function initSortable() {
     sortableInstances.forEach(i => i.destroy());
     sortableInstances = Array.from(document.querySelectorAll('.drag-zone')).map(z => 
-        new Sortable(z, { group:'attendance', animation:150, forceFallback: true, scroll: true, disabled:isLocked, onEnd: () => { saveAll(); updateCounts(); } })
+        new Sortable(z, { 
+            group:'attendance', animation:150, forceFallback: true, scroll: true, disabled:isLocked, 
+            onEnd: () => { 
+                saveAll(); updateCounts(); 
+                autoHideSearch(); // 拖拉磁鐵時，如果搜尋框是空的就關掉
+            } 
+        })
     );
 }
 
@@ -288,6 +276,11 @@ function copyReport() {
 function resetAll() { if(confirm("確定全員歸隊？")) { localStorage.removeItem('attendance_pos'); renderBoard(); closeAllModals(); } }
 function applyFixedZones() { if(confirm("執行固定人員派拔？")) { const pos = JSON.parse(localStorage.getItem('attendance_pos'))||{}; people.forEach(p => {if(p.fixedZone) pos[p.id]=p.fixedZone;}); localStorage.setItem('attendance_pos', JSON.stringify(pos)); renderBoard(); } }
 function factoryReset() { if(confirm("確定重置？所有資料將清空！")) { localStorage.clear(); location.reload(); } }
+function closeAllModals() { 
+    document.querySelectorAll('#modal, #config-modal, #data-modal, #overlay').forEach(e => e.style.display='none'); 
+    if (modalSortable) { modalSortable.destroy(); modalSortable = null; }
+    autoHideSearch(); // 關閉彈窗時檢查搜尋框
+}
 function openDataModal() { document.getElementById('data-area').value = JSON.stringify({config, people, pos: JSON.parse(localStorage.getItem('attendance_pos'))||{}}); document.getElementById('data-modal').style.display='block'; document.getElementById('overlay').style.display='block'; }
 function importData() { try { const d = JSON.parse(document.getElementById('data-area').value); localStorage.setItem('attendance_config', JSON.stringify(d.config)); localStorage.setItem('attendance_people', JSON.stringify(d.people)); localStorage.setItem('attendance_pos', JSON.stringify(d.pos)); location.reload(); } catch(e) { alert("格式錯誤！"); } }
 function openModal(p = null) {
