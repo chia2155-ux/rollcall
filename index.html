@@ -12,7 +12,7 @@
         }
         body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f5f5f5; margin: 0; padding: 0 8px 150px 8px; }
 
-        /* 凍結區域 */
+        /* 統計與搜尋區域 */
         .sticky-header { position: sticky; top: 0; z-index: 1000; background-color: #f5f5f5; padding-top: 8px; padding-bottom: 5px; }
         .summary-table { width: 100%; background: #fff; border-collapse: collapse; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; text-align: center; font-size: 0.75em; margin-bottom: 5px; }
         .summary-table th { background: #34495e; color: white; padding: 4px; }
@@ -20,9 +20,9 @@
 
         /* 搜尋框 */
         #search-bar-container { display: none; margin-bottom: 8px; }
-        .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 20px; font-size: 14px; box-sizing: border-box; outline: none; }
+        .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 20px; font-size: 14px; box-sizing: border-box; outline: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
-        /* 區塊樣式 */
+        /* 看板樣式 */
         .section-header { display: flex; justify-content: space-between; align-items: center; background: var(--primary); color: white; padding: 5px 12px; margin-top: 12px; border-radius: 5px; }
         .section-header button { background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 2px 8px; font-size: 0.75em; border-radius: 4px; }
         .row { display: flex; background: white; border-bottom: 1px solid #ddd; min-height: 50px; }
@@ -37,7 +37,7 @@
         .card-nco { background-color: var(--nco); color: #222; }
         .card-soldier { background-color: var(--soldier); color: #222; }
 
-        /* 底部 2 排按鈕 */
+        /* 底部 2x3 按鈕 */
         .btn-container { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 10px 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; box-shadow: 0 -2px 15px rgba(0,0,0,0.15); z-index: 1000; }
         .btn-container button { padding: 12px 0; border: none; border-radius: 6px; font-weight: bold; font-size: 0.8em; color: white; }
 
@@ -45,7 +45,6 @@
         #modal, #config-modal, #data-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 2000; width: 88%; border-radius: 10px; max-height: 85vh; overflow-y: auto; }
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 1500; }
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
-        
         .config-item { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border: 1px solid #ddd; margin-bottom: 8px; padding: 8px 12px; border-radius: 6px; }
         .drag-handle { cursor: grab; padding: 10px; color: #999; font-size: 1.2em; touch-action: none; }
     </style>
@@ -86,13 +85,13 @@
 <div id="overlay" onclick="closeAllModals()"></div>
 
 <div id="config-modal">
-    <h3 id="config-title-text">管理</h3>
+    <h3 id="config-title-text">管理順序</h3>
     <div id="config-list-root"></div>
     <div style="display: flex; gap: 5px; margin-top: 15px;">
         <input type="text" id="new-config-name" placeholder="名稱..." style="margin: 0;">
-        <button onclick="addConfigItem()" style="background:#27ae60; color:white; white-space:nowrap; padding: 0 15px;">＋</button>
+        <button onclick="addConfigItem()" style="background:#27ae60; color:white; padding: 0 15px;">＋</button>
     </div>
-    <button onclick="closeAllModals()" style="width:100%; margin-top: 20px; background: #34495e; color: white; padding: 12px 0;">關閉</button>
+    <button onclick="closeAllModals()" style="width:100%; margin-top: 20px; background: #34495e; color: white; padding: 12px 0; border-radius: 6px;">完成並關閉</button>
 </div>
 
 <div id="modal">
@@ -118,7 +117,7 @@
 </div>
 
 <script>
-// --- 基礎變數 ---
+// --- 基礎變數與權重 ---
 const initialPeople = []; 
 const defaultConfig = {
     group: ["連部組","營部組","通信組","武化組","飛雷組","通保組","CP組","保養排","履車組","輪車組","醫務組","食勤組","預財組","未分類"],
@@ -137,7 +136,7 @@ function getRankWeight(rank) {
     return w;
 }
 
-// --- 搜尋邏輯：點旁邊消失 ---
+// --- 搜尋邏輯優化 ---
 function toggleSearch(e) {
     if(e) e.stopPropagation();
     const bar = document.getElementById('search-bar-container');
@@ -148,11 +147,10 @@ function toggleSearch(e) {
 
 function handleGlobalClick(e) {
     const bar = document.getElementById('search-bar-container');
-    if (bar.style.display === 'block') {
-        // 點擊的地方不是搜尋框、也不是搜尋按鈕，就關閉
+    const box = document.getElementById('search-box');
+    // 如果搜尋框開啟中，且點擊外部，且搜尋框沒字 -> 自動收起
+    if (bar.style.display === 'block' && box.value === '') {
         bar.style.display = 'none';
-        document.getElementById('search-box').value = '';
-        filterPeople();
     }
 }
 
@@ -163,7 +161,20 @@ function filterPeople() {
     });
 }
 
-// --- 管理邏輯：徹底修復重置問題 ---
+// --- 彈窗關閉邏輯：檢查搜尋框 ---
+function closeAllModals() {
+    document.querySelectorAll('#modal, #config-modal, #data-modal, #overlay').forEach(e => e.style.display='none');
+    if (modalSortable) { modalSortable.destroy(); modalSortable = null; }
+    
+    // 智慧收合：如果搜尋框是空的，關閉其他彈窗時順便把搜尋框收起來
+    const box = document.getElementById('search-box');
+    const bar = document.getElementById('search-bar-container');
+    if (box.value === '') {
+        bar.style.display = 'none';
+    }
+}
+
+// --- 管理功能：穩定掛載版本 ---
 function openConfig(type) {
     currentCfgType = type;
     const root = document.getElementById('config-list-root');
@@ -189,7 +200,6 @@ function openConfig(type) {
     document.getElementById('config-modal').style.display = 'block';
     document.getElementById('overlay').style.display = 'block';
 
-    // 使用 requestAnimationFrame 確保瀏覽器已完成渲染
     requestAnimationFrame(() => {
         modalSortable = Sortable.create(newList, {
             handle: '.drag-handle', animation: 150, forceFallback: true,
@@ -201,7 +211,7 @@ function openConfig(type) {
     });
 }
 
-// --- 渲染看板 ---
+// --- 看板渲染與系統功能 ---
 function renderBoard() {
     const areas = { group: document.getElementById('group-area'), inCamp: document.getElementById('in-incident-area'), offCamp: document.getElementById('off-incident-area') };
     const selHome = document.getElementById('p-group'), selFix = document.getElementById('p-fixed');
@@ -223,7 +233,10 @@ function renderBoard() {
     });
 
     const pos = JSON.parse(localStorage.getItem('attendance_pos')) || {};
+    const seenIds = new Set();
     people.forEach(p => {
+        if (seenIds.has(p.id)) return;
+        seenIds.add(p.id);
         const card = document.createElement('div');
         const w = getRankWeight(p.rank);
         card.className = `person-card ${w>=900?'card-officer':w>=700?'card-nco':'card-soldier'}${p.fixedZone?' card-fixed':''}`; 
@@ -237,7 +250,7 @@ function renderBoard() {
     document.querySelectorAll('.drag-zone').forEach(z => {
         Array.from(z.children).sort((a,b) => b.dataset.weight - a.dataset.weight).forEach(i => z.appendChild(i));
     });
-    initSortable(); updateCounts();
+    initSortable(); updateCounts(); filterPeople();
 }
 
 function initSortable() {
@@ -275,7 +288,6 @@ function copyReport() {
 function resetAll() { if(confirm("確定全員歸隊？")) { localStorage.removeItem('attendance_pos'); renderBoard(); closeAllModals(); } }
 function applyFixedZones() { if(confirm("執行固定人員派拔？")) { const pos = JSON.parse(localStorage.getItem('attendance_pos'))||{}; people.forEach(p => {if(p.fixedZone) pos[p.id]=p.fixedZone;}); localStorage.setItem('attendance_pos', JSON.stringify(pos)); renderBoard(); } }
 function factoryReset() { if(confirm("確定重置？所有資料將清空！")) { localStorage.clear(); location.reload(); } }
-function closeAllModals() { document.querySelectorAll('#modal, #config-modal, #data-modal, #overlay').forEach(e => e.style.display='none'); if(modalSortable) { modalSortable.destroy(); modalSortable = null; } }
 function openDataModal() { document.getElementById('data-area').value = JSON.stringify({config, people, pos: JSON.parse(localStorage.getItem('attendance_pos'))||{}}); document.getElementById('data-modal').style.display='block'; document.getElementById('overlay').style.display='block'; }
 function importData() { try { const d = JSON.parse(document.getElementById('data-area').value); localStorage.setItem('attendance_config', JSON.stringify(d.config)); localStorage.setItem('attendance_people', JSON.stringify(d.people)); localStorage.setItem('attendance_pos', JSON.stringify(d.pos)); location.reload(); } catch(e) { alert("格式錯誤！"); } }
 function openModal(p = null) {
