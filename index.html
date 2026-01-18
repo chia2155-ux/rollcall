@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>單位數位點名板 - 備份功能版</title>
+    <title>單位數位點名板 - 全功能修復版</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root {
             --group-bg: #e8ecef; --in-camp-bg: #fff9c4; --off-camp-bg: #ffcdd2;
             --primary: #2c3e50; --officer: #ff5252; --nco: #fbc02d; --soldier: #69f0ae;
         }
-        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f5f5f5; margin: 0; padding: 0 8px 110px 8px; }
+        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f5f5f5; margin: 0; padding: 0 8px 130px 8px; }
 
         /* 凍結統計欄 */
         .sticky-header { position: sticky; top: 0; z-index: 1000; background-color: #f5f5f5; padding-top: 8px; padding-bottom: 5px; }
@@ -18,24 +18,31 @@
         .summary-table th { background: #34495e; color: white; padding: 4px; }
         .summary-table td { padding: 6px; font-weight: bold; border: 1px solid #eee; }
 
-        /* 標題與排版 */
+        /* 區塊標題 */
         .section-header { display: flex; justify-content: space-between; align-items: center; background: var(--primary); color: white; padding: 5px 12px; margin-top: 12px; border-radius: 5px; }
         .section-header button { background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 2px 8px; font-size: 0.75em; }
+        
         .row { display: flex; background: white; border-bottom: 1px solid #ddd; min-height: 50px; }
         .label { width: 65px; background: var(--group-bg); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75em; text-align: center; border-right: 2px solid #ccc; padding: 4px; flex-shrink: 0; }
         .in-row .label { background: var(--in-camp-bg); }
         .off-row .label { background: var(--off-camp-bg); }
 
-        /* 卡片區域：一排 3-4 個 */
+        /* 人員卡片 */
         .drag-zone { flex-grow: 1; padding: 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 4px; min-height: 40px; }
         .person-card { padding: 5px 2px; border-radius: 3px; font-size: 0.8em; text-align: center; box-shadow: 1px 1px 2px rgba(0,0,0,0.1); font-weight: bold; border: 1px solid rgba(0,0,0,0.05); }
         .card-officer { background-color: var(--officer); color: white; }
         .card-nco { background-color: var(--nco); color: #222; }
         .card-soldier { background-color: var(--soldier); color: #222; }
 
-        /* 底部按鈕 */
-        .btn-container { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 8px 4px; display: grid; grid-template-columns: 1fr 1.2fr 1fr 1fr; gap: 4px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
-        .btn-container button { padding: 8px 0; border: none; border-radius: 5px; font-weight: bold; font-size: 0.8em; color: white; }
+        /* 底部按鈕優化：兩列式排版 */
+        .btn-container { 
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            background: white; padding: 10px 8px; 
+            display: grid; grid-template-columns: 1fr 1fr 1fr; /* 第一排三顆 */
+            gap: 8px; box-shadow: 0 -2px 15px rgba(0,0,0,0.15); z-index: 1000; 
+        }
+        .btn-container button { padding: 10px 0; border: none; border-radius: 6px; font-weight: bold; font-size: 0.85em; color: white; }
+        .full-row { grid-column: span 3; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } /* 第二排兩顆 */
 
         /* 彈窗 */
         #modal, #config-modal, #data-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 2000; width: 88%; border-radius: 10px; max-height: 85vh; overflow-y: auto; }
@@ -69,7 +76,10 @@
     <button id="lock-btn" onclick="toggleLock()" style="background:#f39c12;">🔓 解鎖</button>
     <button onclick="copyReport()" style="background:#8e44ad;">📋 回報</button>
     <button onclick="openModal()" style="background:#27ae60;">＋ 人員</button>
-    <button onclick="openDataModal()" style="background:#2980b9;">💾 備份</button>
+    <div class="full-row">
+        <button onclick="resetAll()" style="background:#2980b9;">⟲ 一鍵歸隊</button>
+        <button onclick="openDataModal()" style="background:#34495e;">💾 備份/移轉</button>
+    </div>
 </div>
 
 <div id="overlay" onclick="closeAllModals()"></div>
@@ -86,23 +96,21 @@
 </div>
 
 <div id="config-modal">
-    <h3 id="config-title">管理順序 (可拖曳)</h3>
+    <h3 id="config-title">管理順序</h3>
     <div id="config-list"></div>
     <input type="text" id="new-config-name" placeholder="新增名稱...">
-    <button onclick="addConfigItem()" style="background:#27ae60; color:white; width:100%; margin: 5px 0;">＋ 新增</button>
+    <button onclick="addConfigItem()" style="background:#27ae60; color:white; width:100%;">＋ 新增</button>
     <button onclick="closeAllModals()" style="width:100%; margin-top: 10px;">完成</button>
 </div>
 
 <div id="data-modal">
     <h3>備份與移轉</h3>
-    <p style="font-size: 11px; color: #666;">複製下方代碼可存檔或傳給別人；貼上代碼並按匯入可同步名單。</p>
     <textarea id="data-area"></textarea>
-    <button onclick="importData()" style="background:#d32f2f; color:white; width:100%;">📥 匯入資料 (覆蓋目前名單)</button>
+    <button onclick="importData()" style="background:#d32f2f; color:white; width:100%;">📥 匯入資料</button>
     <button onclick="closeAllModals()" style="width:100%; margin-top: 10px;">關閉</button>
 </div>
 
 <script>
-// --- 階級權重 ---
 function getRankWeight(rank) {
     let w = 0;
     if (rank.includes('校')) w = 1000; else if (rank.includes('尉')) w = 900;
@@ -111,7 +119,6 @@ function getRankWeight(rank) {
     return w;
 }
 
-// --- 資料恢復邏輯 ---
 const initialPeople = [
     {id: '1', rank: '上尉', name: '劉炫良', home: '連部組'}, {id: '2', rank: '上尉', name: '劉恆齊', home: '連部組'}, {id: '3', rank: '上尉', name: '林峻鴻', home: '連部組'}, {id: '4', rank: '上兵', name: '李敏豪', home: '連部組'}, {id: '5', rank: '一兵', name: '莊迦程', home: '連部組'},
     {id: '6', rank: '上士', name: '林庭君', home: '營部組'}, {id: '7', rank: '中士', name: '羅子建', home: '營部組'}, {id: '8', rank: '上兵', name: '林哲男', home: '營部組'}, {id: '9', rank: '上兵', name: '吳琪鈺', home: '營部組'},
@@ -177,15 +184,26 @@ function initSortable() {
     });
 }
 
+// --- 強化統計邏輯 ---
 function updateCounts() {
-    let eO=0, eN=0, eS=0, aO=0, aN=0, aS=0;
-    people.forEach(p => { const w=getRankWeight(p.rank); if(w>=900) eO++; else if(w>=700) eN++; else eS++; });
-    document.querySelectorAll('.person-card').forEach(c => {
-        const p = people.find(x => x.id === c.dataset.id); const zid = c.parentElement.id.replace('zone-','');
-        if(config.group.includes(zid) || config.inCamp.includes(zid)) { const w=getRankWeight(p.rank); if(w>=900) aO++; else if(w>=700) aN++; else aS++; }
+    let eOff=0, eNco=0, eSol=0, aOff=0, aNco=0, aSol=0;
+    const pos = JSON.parse(localStorage.getItem('attendance_pos')) || {};
+    
+    // 從資料源計算應到
+    people.forEach(p => {
+        const w = getRankWeight(p.rank);
+        let type = '';
+        if(w>=900){ eOff++; type='off'; } else if(w>=700){ eNco++; type='nco'; } else { eSol++; type='sol'; }
+        
+        // 判定所在位置 ID
+        const currentZoneId = (pos[p.id] || `zone-${p.home}`).replace('zone-','');
+        if(config.group.includes(currentZoneId) || config.inCamp.includes(currentZoneId)) {
+            if(type==='off') aOff++; else if(type==='nco') aNco++; else aSol++;
+        }
     });
-    document.getElementById('exp-off').innerText=eO; document.getElementById('exp-nco').innerText=eN; document.getElementById('exp-sol').innerText=eS; document.getElementById('exp-total').innerText=eO+eN+eS;
-    document.getElementById('act-off').innerText=aO; document.getElementById('act-nco').innerText=aN; document.getElementById('act-sol').innerText=aS; document.getElementById('act-total').innerText=aO+aN+aS;
+
+    document.getElementById('exp-off').innerText=eOff; document.getElementById('exp-nco').innerText=eNco; document.getElementById('exp-sol').innerText=eSol; document.getElementById('exp-total').innerText=eOff+eNco+eSol;
+    document.getElementById('act-off').innerText=aOff; document.getElementById('act-nco').innerText=aNco; document.getElementById('act-sol').innerText=aSol; document.getElementById('act-total').innerText=aOff+aNco+aSol;
 }
 
 function toggleLock() { isLocked = !isLocked; document.getElementById('lock-btn').innerText = isLocked ? "🔒 鎖定" : "🔓 解鎖"; renderBoard(); }
@@ -196,7 +214,8 @@ function copyReport() {
     navigator.clipboard.writeText(r); alert("回報已複製！");
 }
 
-// --- 備份功能 ---
+function resetAll() { if(confirm("確定讓所有人歸隊嗎？")) { localStorage.removeItem('attendance_pos'); renderBoard(); } }
+
 function openDataModal() {
     const data = { config, people, pos: JSON.parse(localStorage.getItem('attendance_pos')) || {} };
     document.getElementById('data-area').value = JSON.stringify(data);
@@ -206,7 +225,7 @@ function openDataModal() {
 function importData() {
     try {
         const d = JSON.parse(document.getElementById('data-area').value);
-        if(confirm("匯入將覆蓋目前所有資料，確定嗎？")) {
+        if(confirm("匯入將覆蓋目前資料，確定嗎？")) {
             localStorage.setItem('attendance_config', JSON.stringify(d.config));
             localStorage.setItem('attendance_people', JSON.stringify(d.people));
             localStorage.setItem('attendance_pos', JSON.stringify(d.pos));
@@ -215,7 +234,6 @@ function importData() {
     } catch(e) { alert("代碼格式錯誤！"); }
 }
 
-// --- 區域管理 ---
 let currentCfgType = '';
 function openConfig(type) {
     currentCfgType = type; const list = document.getElementById('config-list'); list.innerHTML = '';
@@ -243,7 +261,6 @@ function savePerson() {
     saveAll(); closeAllModals(); renderBoard();
 }
 function deletePerson() { if(confirm("確定刪除？")) { people=people.filter(x=>x.id!==document.getElementById('edit-id').value); saveAll(); closeAllModals(); renderBoard(); } }
-function resetAll() { if(confirm("確定歸隊？")) { localStorage.removeItem('attendance_pos'); renderBoard(); } }
 
 renderBoard();
 </script>
