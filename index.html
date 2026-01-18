@@ -1,0 +1,302 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>數位行動點名板 - 戰情版</title>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        :root {
+            --group-bg: #e8ecef;
+            --in-camp-bg: #fff9c4; /* 在營事故黃 */
+            --off-camp-bg: #ffcdd2; /* 不在營事故紅 */
+            --primary: #2c3e50;
+            --officer: #ff5252;
+            --nco: #fbc02d;
+            --soldier: #69f0ae;
+        }
+
+        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f5f5f5; margin: 0; padding: 10px; padding-bottom: 80px; }
+
+        /* 統計表優化 */
+        .summary-table {
+            width: 100%; background: #fff; border-collapse: collapse; margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; text-align: center; font-size: 0.85em;
+        }
+        .summary-table th { background: #34495e; color: white; padding: 8px; }
+        .summary-table td { padding: 10px; font-weight: bold; border: 1px solid #eee; }
+        .row-header { background: #f8f9fa; font-size: 1em; color: #333; }
+        .num { font-size: 1.2em; }
+
+        .section-title { background: var(--primary); color: white; padding: 8px 15px; font-weight: bold; margin-top: 15px; border-radius: 5px; }
+        .title-in { background: #fbc02d; color: #333; }
+        .title-off { background: #d32f2f; color: white; }
+
+        .row { display: flex; background: white; border-bottom: 1px solid #ddd; min-height: 60px; }
+        .label {
+            width: 80px; background: var(--group-bg); display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.85em; text-align: center; border-right: 2px solid #ccc; padding: 5px; flex-shrink: 0;
+        }
+        .in-row .label { background: var(--in-camp-bg); }
+        .off-row .label { background: var(--off-camp-bg); }
+
+        .drag-zone { flex-grow: 1; padding: 10px; display: flex; flex-wrap: wrap; gap: 6px; min-height: 50px; }
+
+        /* 人員磁鐵 */
+        .person-card {
+            padding: 8px 10px; border-radius: 4px; font-size: 0.9em; box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            cursor: grab; font-weight: bold; border: 1px solid rgba(0,0,0,0.1);
+        }
+        .card-officer { background-color: var(--officer); color: white; }
+        .card-nco { background-color: var(--nco); color: #222; }
+        .card-soldier { background-color: var(--soldier); color: #222; }
+
+        .btn-container {
+            position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 10px;
+            display: flex; justify-content: space-around; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 100;
+        }
+        button { padding: 10px 15px; border: none; border-radius: 5px; font-weight: bold; }
+        .btn-add { background: #27ae60; color: white; }
+        .btn-reset { background: #2980b9; color: white; }
+
+        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 200; width: 85%; border-radius: 10px; }
+        #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 199; }
+        input, select { width: 100%; padding: 8px; margin: 10px 0; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+<h2 style="margin: 5px 0; text-align: center;">數位行動點名板</h2>
+
+<table class="summary-table">
+    <thead>
+        <tr>
+            <th>統計項目</th>
+            <th>軍官</th>
+            <th>士官</th>
+            <th>士兵</th>
+            <th>總計</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="row-header">
+            <td>應到人數</td>
+            <td id="exp-off">0</td>
+            <td id="exp-nco">0</td>
+            <td id="exp-sol">0</td>
+            <td id="exp-total">0</td>
+        </tr>
+        <tr style="color: #2980b9;">
+            <td>在營人數</td>
+            <td id="act-off" class="num">0</td>
+            <td id="act-nco" class="num">0</td>
+            <td id="act-sol" class="num">0</td>
+            <td id="act-total" class="num">0</td>
+        </tr>
+    </tbody>
+</table>
+
+<div id="board">
+    <div class="section-title">工作組別 (在營)</div>
+    <div id="group-area"></div>
+
+    <div class="section-title title-in">在營事故 (黃)</div>
+    <div id="in-incident-area"></div>
+
+    <div class="section-title title-off">不在營事故 (紅)</div>
+    <div id="off-incident-area"></div>
+</div>
+
+<div class="btn-container">
+    <button class="btn-add" onclick="openModal()">＋ 新增人員</button>
+    <button class="btn-reset" onclick="resetAll()">⟲ 一鍵歸隊</button>
+</div>
+
+<div id="overlay" onclick="closeModal()"></div>
+<div id="modal">
+    <h3 id="modal-title">人員管理</h3>
+    <input type="hidden" id="edit-id">
+    <label>階級：</label><input type="text" id="p-rank" placeholder="例如：上尉">
+    <label>姓名：</label><input type="text" id="p-name">
+    <label>所屬組別：</label><select id="p-group"></select>
+    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+        <button onclick="savePerson()" style="background: #27ae60; color:white;">儲存</button>
+        <button id="btn-delete" onclick="deletePerson()" style="background: #e74c3c; color:white; display:none;">刪除</button>
+        <button onclick="closeModal()">取消</button>
+    </div>
+</div>
+
+<script>
+const initialGroups = ["連部組","營部組","通信組","武化組","飛雷組","通保組","CP組","保養排","履車組","輪車組","醫務組","食勤組","預財組","未分類"];
+const inCampIncidents = ["補休", "衛哨", "戰情", "調度", "彈藥", "軍械"];
+const offCampIncidents = ["休假", "洽公", "受訓", "支援", "招募", "託管"];
+
+let people = [
+    {id: '1', rank: '上尉', name: '劉炫良', home: '連部組'}, {id: '2', rank: '上尉', name: '劉恆齊', home: '連部組'}, {id: '3', rank: '上尉', name: '林峻鴻', home: '連部組'}, {id: '4', rank: '上兵', name: '李敏豪', home: '連部組'}, {id: '5', rank: '一兵', name: '莊迦程', home: '連部組'},
+    {id: '6', rank: '上士', name: '林庭君', home: '營部組'}, {id: '7', rank: '中士', name: '羅子建', home: '營部組'}, {id: '8', rank: '上兵', name: '林哲男', home: '營部組'}, {id: '9', rank: '上兵', name: '吳琪鈺', home: '營部組'},
+    {id: '10', rank: '中士', name: '吳仕洋', home: '通信組'}, {id: '11', rank: '下士', name: '張原瑜', home: '通信組'},
+    {id: '12', rank: '上士', name: '謝倉玄', home: '武化組'}, {id: '13', rank: '下士', name: '潘聖隆', home: '武化組'},
+    {id: '14', rank: '上士', name: '陳雍文', home: '飛雷組'}, {id: '15', rank: '中士', name: '曹亨吉', home: '飛雷組'}, {id: '16', rank: '下士', name: '馮基礎', home: '飛雷組'}, {id: '17', rank: '上兵', name: '趙韋兒', home: '飛雷組'},
+    {id: '18', rank: '下士', name: '黃琇平', home: '通保組'}, {id: '19', rank: '一兵', name: '林爚璋', home: '通保組'},
+    {id: '20', rank: '上士', name: '林雪豪', home: 'CP組'}, {id: '21', rank: '上士', name: '蘇精翰', home: 'CP組'}, {id: '22', rank: '中士', name: '梁文駿', home: 'CP組'}, {id: '23', rank: '下士', name: '廖雅敏', home: 'CP組'},
+    {id: '24', rank: '少尉', name: '李晉瑋', home: '保養排'}, {id: '25', rank: '士官長', name: '陳昱達', home: '保養排'}, {id: '26', rank: '上士', name: '陳明祥', home: '保養排'}, {id: '27', rank: '上士', name: '王資文', home: '保養排'}, {id: '28', rank: '上士', name: '楊惠雅', home: '保養排'}, {id: '29', rank: '中士', name: '鄭廷忠', home: '保養排'},
+    {id: '30', rank: '上士', name: '崔聯義', home: '履車組'}, {id: '31', rank: '下士', name: '潘一誠', home: '履車組'}, {id: '32', rank: '一兵', name: '鍾豐駿', home: '履車組'},
+    {id: '33', rank: '上士', name: '周辰軒', home: '輪車組'}, {id: '34', rank: '中士', name: '劉玟琮', home: '輪車組'}, {id: '35', rank: '下士', name: '梁宸綮', home: '輪車組'}, {id: '36', rank: '下士', name: '唐彥佐', home: '輪車組'}, {id: '37', rank: '一兵', name: '蕭甫暹', home: '輪車組'}, {id: '38', rank: '一兵', name: '龔子宸', home: '輪車組'}, {id: '39', rank: '一兵', name: '巫進昇', home: '輪車組'},
+    {id: '40', rank: '中尉', name: '潘冠宇', home: '醫務組'}, {id: '41', rank: '上士', name: '蔡淑賢', home: '醫務組'}, {id: '42', rank: '中士', name: '王建蒝', home: '醫務組'}, {id: '43', rank: '下士', name: '謝佳霖', home: '醫務組'}, {id: '44', rank: '二兵', name: '張秦一哥', home: '醫務組'},
+    {id: '45', rank: '中士', name: '劉哲男', home: '食勤組'}, {id: '46', rank: '上兵', name: '李建祥', home: '食勤組'}, {id: '47', rank: '上兵', name: '林進雄', home: '食勤組'},
+    {id: '48', rank: '上士', name: '楊憲霖', home: '預財組'}, {id: '49', rank: '中士', name: '廖文旗', home: '預財組'}, {id: '50', rank: '中士', name: '樂誠得', home: '預財組'},
+    {id: '51', rank: '上兵', name: '宋椘妤', home: '未分類'}, {id: '52', rank: '中士', name: '陳金瑋', home: '未分類'}
+];
+
+function getRankType(rank) {
+    if (rank.includes('尉') || rank.includes('校') || rank.includes('少') || rank.includes('中') && rank.length <= 2) {
+        if (rank.includes('中士')) return 'nco';
+        return 'off';
+    }
+    if (rank.includes('士') || rank.includes('長')) return 'nco';
+    if (rank.includes('兵')) return 'sol';
+    return 'sol';
+}
+
+function renderBoard() {
+    const gArea = document.getElementById('group-area');
+    const inArea = document.getElementById('in-incident-area');
+    const offArea = document.getElementById('off-incident-area');
+    const select = document.getElementById('p-group');
+    
+    gArea.innerHTML = ''; inArea.innerHTML = ''; offArea.innerHTML = ''; select.innerHTML = '';
+
+    initialGroups.forEach(g => {
+        gArea.innerHTML += `<div class="row"><div class="label">${g}</div><div class="drag-zone" id="zone-${g}"></div></div>`;
+        select.innerHTML += `<option value="${g}">${g}</option>`;
+    });
+    inCampIncidents.forEach(i => {
+        inArea.innerHTML += `<div class="row in-row"><div class="label">${i}</div><div class="drag-zone" id="zone-${i}"></div></div>`;
+    });
+    offCampIncidents.forEach(i => {
+        offArea.innerHTML += `<div class="row off-row"><div class="label">${i}</div><div class="drag-zone" id="zone-${i}"></div></div>`;
+    });
+
+    const savedPos = JSON.parse(localStorage.getItem('attendance_pos')) || {};
+    
+    people.forEach(p => {
+        const card = document.createElement('div');
+        const rType = getRankType(p.rank);
+        card.className = `person-card card-${rType === 'off' ? 'officer' : rType === 'nco' ? 'nco' : 'soldier'}`;
+        card.id = `person-${p.id}`;
+        card.innerText = `${p.rank} ${p.name}`;
+        card.setAttribute('data-id', p.id);
+        card.onclick = (e) => { e.stopPropagation(); openModal(p); };
+        
+        const currentZoneId = savedPos[p.id] || `zone-${p.home}`;
+        const targetZone = document.getElementById(currentZoneId);
+        if (targetZone) targetZone.appendChild(card);
+    });
+
+    initSortable();
+    updateCounts();
+}
+
+function initSortable() {
+    document.querySelectorAll('.drag-zone').forEach(zone => {
+        new Sortable(zone, {
+            group: 'attendance', animation: 150,
+            onEnd: () => { saveAllPositions(); updateCounts(); }
+        });
+    });
+}
+
+function updateCounts() {
+    let eOff = 0, eNco = 0, eSol = 0;
+    let aOff = 0, aNco = 0, aSol = 0;
+
+    // 計算應到 (總人數)
+    people.forEach(p => {
+        const rType = getRankType(p.rank);
+        if (rType === 'off') eOff++; else if (rType === 'nco') eNco++; else eSol++;
+    });
+
+    // 計算實到 (在組別或在營事故)
+    document.querySelectorAll('.person-card').forEach(card => {
+        const pId = card.getAttribute('data-id');
+        const person = people.find(p => p.id === pId);
+        const zoneId = card.parentElement.id.replace('zone-', '');
+        
+        if (initialGroups.includes(zoneId) || inCampIncidents.includes(zoneId)) {
+            const rType = getRankType(person.rank);
+            if (rType === 'off') aOff++; else if (rType === 'nco') aNco++; else aSol++;
+        }
+    });
+
+    document.getElementById('exp-off').innerText = eOff;
+    document.getElementById('exp-nco').innerText = eNco;
+    document.getElementById('exp-sol').innerText = eSol;
+    document.getElementById('exp-total').innerText = eOff+eNco+eSol;
+
+    document.getElementById('act-off').innerText = aOff;
+    document.getElementById('act-nco').innerText = aNco;
+    document.getElementById('act-sol').innerText = aSol;
+    document.getElementById('act-total').innerText = aOff+aNco+aSol;
+}
+
+function saveAllPositions() {
+    const pos = {};
+    document.querySelectorAll('.person-card').forEach(card => {
+        pos[card.getAttribute('data-id')] = card.parentElement.id;
+    });
+    localStorage.setItem('attendance_pos', JSON.stringify(pos));
+    localStorage.setItem('attendance_people', JSON.stringify(people));
+}
+
+function resetAll() { if(confirm("確定一鍵歸隊？")) { localStorage.removeItem('attendance_pos'); renderBoard(); } }
+function closeModal() { document.getElementById('modal').style.display = 'none'; document.getElementById('overlay').style.display = 'none'; }
+
+function openModal(person = null) {
+    const delBtn = document.getElementById('btn-delete');
+    if (person) {
+        document.getElementById('edit-id').value = person.id;
+        document.getElementById('p-rank').value = person.rank;
+        document.getElementById('p-name').value = person.name;
+        document.getElementById('p-group').value = person.home;
+        delBtn.style.display = "block";
+    } else {
+        document.getElementById('edit-id').value = "";
+        document.getElementById('p-rank').value = "";
+        document.getElementById('p-name').value = "";
+        delBtn.style.display = "none";
+    }
+    document.getElementById('modal').style.display = 'block';
+    document.getElementById('overlay').style.display = 'block';
+}
+
+function savePerson() {
+    const id = document.getElementById('edit-id').value;
+    const rank = document.getElementById('p-rank').value;
+    const name = document.getElementById('p-name').value;
+    const home = document.getElementById('p-group').value;
+    if (!rank || !name) return alert("請輸入完整資料");
+    if (id) {
+        const index = people.findIndex(p => p.id === id);
+        people[index] = { id, rank, name, home };
+    } else {
+        people.push({ id: Date.now().toString(), rank, name, home });
+    }
+    localStorage.setItem('attendance_people', JSON.stringify(people));
+    closeModal(); renderBoard();
+}
+
+function deletePerson() {
+    if (confirm("確定刪除？")) {
+        const id = document.getElementById('edit-id').value;
+        people = people.filter(p => p.id !== id);
+        localStorage.setItem('attendance_people', JSON.stringify(people));
+        closeModal(); renderBoard();
+    }
+}
+
+const localPeople = localStorage.getItem('attendance_people');
+if (localPeople) people = JSON.parse(localPeople);
+renderBoard();
+</script>
+</body>
+</html>
