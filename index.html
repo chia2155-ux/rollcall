@@ -198,24 +198,52 @@ function initSortable() {
 
 // --- 強化統計邏輯 ---
 function updateCounts() {
-    let eOff=0, eNco=0, eSol=0, aOff=0, aNco=0, aSol=0;
-    const pos = JSON.parse(localStorage.getItem('attendance_pos')) || {};
+    let eOff = 0, eNco = 0, eSol = 0; // 應到
+    let aOff = 0, aNco = 0, aSol = 0; // 在營
+
+    // 1. 計算應到人數 (從名單計算，並自動過濾重複 ID)
+    const uniquePeople = [];
+    const seenIds = new Set();
     
-    // 從資料源計算應到
     people.forEach(p => {
-        const w = getRankWeight(p.rank);
-        let type = '';
-        if(w>=900){ eOff++; type='off'; } else if(w>=700){ eNco++; type='nco'; } else { eSol++; type='sol'; }
-        
-        // 判定所在位置 ID
-        const currentZoneId = (pos[p.id] || `zone-${p.home}`).replace('zone-','');
-        if(config.group.includes(currentZoneId) || config.inCamp.includes(currentZoneId)) {
-            if(type==='off') aOff++; else if(type==='nco') aNco++; else aSol++;
+        if (!seenIds.has(p.id)) {
+            uniquePeople.push(p);
+            seenIds.add(p.id);
+            const w = getRankWeight(p.rank);
+            if (w >= 900) eOff++; 
+            else if (w >= 700) eNco++; 
+            else eSol++;
         }
     });
 
-    document.getElementById('exp-off').innerText=eOff; document.getElementById('exp-nco').innerText=eNco; document.getElementById('exp-sol').innerText=eSol; document.getElementById('exp-total').innerText=eOff+eNco+eSol;
-    document.getElementById('act-off').innerText=aOff; document.getElementById('act-nco').innerText=aNco; document.getElementById('act-sol').innerText=aSol; document.getElementById('act-total').innerText=aOff+aNco+aSol;
+    // 2. 計算在營人數 (直接從畫面的 DOM 元素判斷，最準確)
+    document.querySelectorAll('.person-card').forEach(card => {
+        const pId = card.getAttribute('data-id');
+        const person = people.find(x => x.id === pId);
+        if (!person) return;
+
+        // 檢查這張卡片所在的父層 row 是否為「不在營事故 (off-row)」
+        const parentRow = card.closest('.row');
+        const isOffCamp = parentRow && parentRow.classList.contains('off-row');
+
+        if (!isOffCamp) {
+            const w = getRankWeight(person.rank);
+            if (w >= 900) aOff++;
+            else if (w >= 700) aNco++;
+            else aSol++;
+        }
+    });
+
+    // 3. 渲染到畫面上
+    document.getElementById('exp-off').innerText = eOff;
+    document.getElementById('exp-nco').innerText = eNco;
+    document.getElementById('exp-sol').innerText = eSol;
+    document.getElementById('exp-total').innerText = eOff + eNco + eSol;
+
+    document.getElementById('act-off').innerText = aOff;
+    document.getElementById('act-nco').innerText = aNco;
+    document.getElementById('act-sol').innerText = aSol;
+    document.getElementById('act-total').innerText = aOff + aNco + aSol;
 }
 
 function toggleLock() { isLocked = !isLocked; document.getElementById('lock-btn').innerText = isLocked ? "🔒 鎖定" : "🔓 解鎖"; renderBoard(); }
@@ -278,4 +306,5 @@ renderBoard();
 </script>
 </body>
 </html>
+
 
