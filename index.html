@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -8,41 +8,57 @@
     <style>
         :root {
             --group-bg: #e8ecef;
-            --in-camp-bg: #fff9c4; /* 在營事故黃 */
-            --off-camp-bg: #ffcdd2; /* 不在營事故紅 */
+            --in-camp-bg: #fff9c4;
+            --off-camp-bg: #ffcdd2;
             --primary: #2c3e50;
             --officer: #ff5252;
             --nco: #fbc02d;
             --soldier: #69f0ae;
         }
 
-        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f5f5f5; margin: 0; padding: 10px; padding-bottom: 80px; }
-
-        /* 統計表優化 */
-        .summary-table {
-            width: 100%; background: #fff; border-collapse: collapse; margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; text-align: center; font-size: 0.85em;
+        body { 
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; 
+            background-color: #f5f5f5; 
+            margin: 0; 
+            padding: 0 10px 80px 10px; /* 底部預留空間 */
         }
-        .summary-table th { background: #34495e; color: white; padding: 8px; }
-        .summary-table td { padding: 10px; font-weight: bold; border: 1px solid #eee; }
-        .row-header { background: #f8f9fa; font-size: 1em; color: #333; }
-        .num { font-size: 1.2em; }
 
+        /* 1. 凍結欄位關鍵：Sticky Header */
+        .sticky-header {
+            position: -webkit-sticky; /* 支援 Safari */
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background-color: #f5f5f5; /* 背景需與底色相同，才不會透視 */
+            padding-top: 10px;
+            padding-bottom: 5px;
+        }
+
+        .summary-table {
+            width: 100%; background: #fff; border-collapse: collapse;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; 
+            overflow: hidden; text-align: center; font-size: 0.8em;
+        }
+        .summary-table th { background: #34495e; color: white; padding: 6px; }
+        .summary-table td { padding: 8px; font-weight: bold; border: 1px solid #eee; }
+        .row-header { background: #f8f9fa; color: #333; }
+        .num { font-size: 1.1em; }
+
+        /* 其他排版樣式 */
         .section-title { background: var(--primary); color: white; padding: 8px 15px; font-weight: bold; margin-top: 15px; border-radius: 5px; }
         .title-in { background: #fbc02d; color: #333; }
         .title-off { background: #d32f2f; color: white; }
 
         .row { display: flex; background: white; border-bottom: 1px solid #ddd; min-height: 60px; }
         .label {
-            width: 80px; background: var(--group-bg); display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 0.85em; text-align: center; border-right: 2px solid #ccc; padding: 5px; flex-shrink: 0;
+            width: 70px; background: var(--group-bg); display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.8em; text-align: center; border-right: 2px solid #ccc; padding: 5px; flex-shrink: 0;
         }
         .in-row .label { background: var(--in-camp-bg); }
         .off-row .label { background: var(--off-camp-bg); }
 
         .drag-zone { flex-grow: 1; padding: 10px; display: flex; flex-wrap: wrap; gap: 6px; min-height: 50px; }
 
-        /* 人員磁鐵 */
         .person-card {
             padding: 8px 10px; border-radius: 4px; font-size: 0.9em; box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
             cursor: grab; font-weight: bold; border: 1px solid rgba(0,0,0,0.1);
@@ -59,43 +75,42 @@
         .btn-add { background: #27ae60; color: white; }
         .btn-reset { background: #2980b9; color: white; }
 
-        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 200; width: 85%; border-radius: 10px; }
-        #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 199; }
+        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 1100; width: 85%; border-radius: 10px; }
+        #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 1050; }
         input, select { width: 100%; padding: 8px; margin: 10px 0; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
-<h2 style="margin: 5px 0; text-align: center;">數位行動點名板</h2>
-
-<table class="summary-table">
-    <thead>
-        <tr>
-            <th>統計項目</th>
-            <th>軍官</th>
-            <th>士官</th>
-            <th>士兵</th>
-            <th>總計</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr class="row-header">
-            <td>應到人數</td>
-            <td id="exp-off">0</td>
-            <td id="exp-nco">0</td>
-            <td id="exp-sol">0</td>
-            <td id="exp-total">0</td>
-        </tr>
-        <tr style="color: #2980b9;">
-            <td>在營人數</td>
-            <td id="act-off" class="num">0</td>
-            <td id="act-nco" class="num">0</td>
-            <td id="act-sol" class="num">0</td>
-            <td id="act-total" class="num">0</td>
-        </tr>
-    </tbody>
-</table>
-
+<div class="sticky-header">
+    <table class="summary-table">
+        <thead>
+            <tr>
+                <th>統計項目</th>
+                <th>軍官</th>
+                <th>士官</th>
+                <th>士兵</th>
+                <th>總計</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="row-header">
+                <td>應到人數</td>
+                <td id="exp-off">0</td>
+                <td id="exp-nco">0</td>
+                <td id="exp-sol">0</td>
+                <td id="exp-total">0</td>
+            </tr>
+            <tr style="color: #2980b9;">
+                <td>在營人數</td>
+                <td id="act-off" class="num">0</td>
+                <td id="act-nco" class="num">0</td>
+                <td id="act-sol" class="num">0</td>
+                <td id="act-total" class="num">0</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 <div id="board">
     <div class="section-title">工作組別 (在營)</div>
     <div id="group-area"></div>
@@ -116,7 +131,7 @@
 <div id="modal">
     <h3 id="modal-title">人員管理</h3>
     <input type="hidden" id="edit-id">
-    <label>階級：</label><input type="text" id="p-rank" placeholder="例如：上尉">
+    <label>階級：</label><input type="text" id="p-rank">
     <label>姓名：</label><input type="text" id="p-name">
     <label>所屬組別：</label><select id="p-group"></select>
     <div style="display: flex; justify-content: space-between; margin-top: 10px;">
@@ -127,6 +142,7 @@
 </div>
 
 <script>
+// --- 資料初始化 (同前版本) ---
 const initialGroups = ["連部組","營部組","通信組","武化組","飛雷組","通保組","CP組","保養排","履車組","輪車組","醫務組","食勤組","預財組","未分類"];
 const inCampIncidents = ["補休", "衛哨", "戰情", "調度", "彈藥", "軍械"];
 const offCampIncidents = ["休假", "洽公", "受訓", "支援", "招募", "託管"];
@@ -149,12 +165,11 @@ let people = [
 ];
 
 function getRankType(rank) {
-    if (rank.includes('尉') || rank.includes('校') || rank.includes('少') || rank.includes('中') && rank.length <= 2) {
+    if (rank.includes('尉') || rank.includes('校') || rank.includes('少') || (rank.includes('中') && rank.length <= 2)) {
         if (rank.includes('中士')) return 'nco';
         return 'off';
     }
     if (rank.includes('士') || rank.includes('長')) return 'nco';
-    if (rank.includes('兵')) return 'sol';
     return 'sol';
 }
 
@@ -163,7 +178,6 @@ function renderBoard() {
     const inArea = document.getElementById('in-incident-area');
     const offArea = document.getElementById('off-incident-area');
     const select = document.getElementById('p-group');
-    
     gArea.innerHTML = ''; inArea.innerHTML = ''; offArea.innerHTML = ''; select.innerHTML = '';
 
     initialGroups.forEach(g => {
@@ -197,11 +211,21 @@ function renderBoard() {
     updateCounts();
 }
 
+// 2. 強化拖曳感：增加邊緣自動捲動功能
 function initSortable() {
     document.querySelectorAll('.drag-zone').forEach(zone => {
         new Sortable(zone, {
-            group: 'attendance', animation: 150,
-            onEnd: () => { saveAllPositions(); updateCounts(); }
+            group: 'attendance',
+            animation: 150,
+            scroll: true,             // 啟用自動捲動
+            forceFallback: true,      // 在手機上強制使用回退模式，這讓自動捲動更靈敏
+            scrollSensitivity: 100,    // 距離邊緣多近開始捲動 (像素)
+            scrollSpeed: 20,          // 捲動速度
+            bubbleScroll: true,       // 允許捲動事件冒泡
+            onEnd: () => { 
+                saveAllPositions(); 
+                updateCounts(); 
+            }
         });
     });
 }
@@ -210,13 +234,11 @@ function updateCounts() {
     let eOff = 0, eNco = 0, eSol = 0;
     let aOff = 0, aNco = 0, aSol = 0;
 
-    // 計算應到 (總人數)
     people.forEach(p => {
         const rType = getRankType(p.rank);
         if (rType === 'off') eOff++; else if (rType === 'nco') eNco++; else eSol++;
     });
 
-    // 計算實到 (在組別或在營事故)
     document.querySelectorAll('.person-card').forEach(card => {
         const pId = card.getAttribute('data-id');
         const person = people.find(p => p.id === pId);
