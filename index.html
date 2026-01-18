@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數位行動點名板 - 乾淨版</title>
+    <title>數位點名板 - 終極修復版</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root {
@@ -13,7 +13,7 @@
         body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f5f5f5; margin: 0; padding: 0 8px 160px 8px; }
 
         .sticky-header { position: sticky; top: 0; z-index: 1000; background-color: #f5f5f5; padding-top: 8px; padding-bottom: 5px; }
-        .summary-table { width: 100%; background: #fff; border-collapse: collapse; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; text-align: center; font-size: 0.75em; }
+        .summary-table { width: 100%; background: #fff; border-collapse: collapse; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; text-align: center; font-size: 0.75em; }
         .summary-table th { background: #34495e; color: white; padding: 4px; }
         .summary-table td { padding: 6px; font-weight: bold; border: 1px solid #eee; }
 
@@ -41,8 +41,9 @@
         #modal, #config-modal, #data-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 2000; width: 88%; border-radius: 10px; max-height: 85vh; overflow-y: auto; }
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 1500; }
         input, select, textarea { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
-        .drag-handle { cursor: grab; padding: 10px; color: #999; }
-        .config-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; margin-bottom: 8px; padding: 5px 12px; border-radius: 6px; }
+        
+        .config-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; margin-bottom: 8px; padding: 10px; border-radius: 6px; }
+        .drag-handle { cursor: grab; padding: 10px; color: #999; font-size: 1.2em; touch-action: none; }
     </style>
 </head>
 <body class="unlocked">
@@ -70,9 +71,9 @@
     <button id="lock-btn" onclick="toggleLock()" style="background:#f39c12;">🔓 解鎖</button>
     <button onclick="copyReport()" style="background:#8e44ad;">📋 回報</button>
     <button onclick="openModal()" style="background:#27ae60;">＋ 人員</button>
-    <button onclick="applyFixedZones()" class="span-2" style="background:#d35400;">🏢 固定人員派拔 (平日)</button>
+    <button onclick="applyFixedZones()" class="span-2" style="background:#d35400;">🏢 固定人員派拔</button>
     <button onclick="resetAll()" style="background:#2980b9;">⟲ 歸隊</button>
-    <button onclick="openDataModal()" class="span-3" style="background:#34495e;">💾 數據備份與移轉</button>
+    <button onclick="openDataModal()" class="span-3" style="background:#34495e;">💾 數據備份 / 重置</button>
 </div>
 
 <div id="overlay" onclick="closeAllModals()"></div>
@@ -81,10 +82,10 @@
     <h3>人員管理</h3>
     <input type="hidden" id="edit-id">
     <input type="text" id="p-rank" placeholder="階級"><input type="text" id="p-name" placeholder="姓名">
-    <label>預設組別 (歸隊位)：</label><select id="p-group"></select>
-    <label>固定位置 (平日派拔)：</label><select id="p-fixed"><option value="">-- 無固定位置 --</option></select>
+    <label>預設組別：</label><select id="p-group"></select>
+    <label>固定位置：</label><select id="p-fixed"><option value="">-- 無固定 --</option></select>
     <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-        <button onclick="savePerson()" style="background:#27ae60; color:white; padding: 10px 20px;">儲存</button>
+        <button onclick="savePerson()" style="background:#27ae60; color:white;">儲存</button>
         <button id="btn-delete" onclick="deletePerson()" style="background:#e74c3c; color:white;">刪除</button>
         <button onclick="closeAllModals()">取消</button>
     </div>
@@ -94,20 +95,22 @@
     <h3 id="config-title">管理項目</h3>
     <div id="config-list"></div>
     <div style="display: flex; gap: 5px;">
-        <input type="text" id="new-config-name" placeholder="新增名稱..." style="margin: 0;">
-        <button onclick="addConfigItem()" style="background:#27ae60; color:white; white-space: nowrap; padding: 0 15px;">＋ 新增</button>
+        <input type="text" id="new-config-name" placeholder="名稱..." style="margin: 0;">
+        <button onclick="addConfigItem()" style="background:#27ae60; color:white; white-space:nowrap;">＋ 新增</button>
     </div>
-    <button onclick="closeAllModals()" style="width:100%; margin-top: 20px; background: #34495e; color: white; padding: 12px 0;">完成離開</button>
+    <button onclick="closeAllModals()" style="width:100%; margin-top: 20px; background: #34495e; color: white; padding: 12px 0;">關閉</button>
 </div>
 
 <div id="data-modal">
-    <h3>備份與移轉</h3>
-    <textarea id="data-area" placeholder="在此貼上備份代碼並按匯入..."></textarea>
-    <button onclick="importData()" style="background:#d32f2f; color:white; width:100%;">📥 匯入資料 (覆蓋目前名單)</button>
-    <button onclick="closeAllModals()" style="width:100%; margin-top: 10px;">關閉</button>
+    <h3>備份與重置</h3>
+    <textarea id="data-area" placeholder="在此匯入資料..."></textarea>
+    <button onclick="importData()" style="background:#d32f2f; color:white; width:100%; margin-bottom: 10px;">📥 匯入並覆蓋</button>
+    <button onclick="factoryReset()" style="background:#7f8c8d; color:white; width:100%;">🔥 徹底清空所有手機快取</button>
+    <button onclick="closeAllModals()" style="width:100%; margin-top: 15px;">關閉</button>
 </div>
 
 <script>
+// --- 核心工具 ---
 function getRankWeight(rank) {
     let w = 0;
     if (rank.includes('校')) w = 1000; else if (rank.includes('尉')) w = 900;
@@ -116,9 +119,6 @@ function getRankWeight(rank) {
     return w;
 }
 
-// 1. 已依照要求清空原始人員名單，系統將依賴備份匯入。
-const initialPeople = [];
-
 const defaultConfig = {
     group: ["連部組","營部組","通信組","武化組","飛雷組","通保組","CP組","保養排","履車組","輪車組","醫務組","食勤組","預財組","未分類"],
     inCamp: ["補休", "衛哨", "戰情", "調度", "彈藥", "軍械", "割草"],
@@ -126,152 +126,147 @@ const defaultConfig = {
 };
 
 let config = JSON.parse(localStorage.getItem('attendance_config')) || defaultConfig;
-config = { ...defaultConfig, ...config }; 
-let people = JSON.parse(localStorage.getItem('attendance_people')) || initialPeople;
+let people = JSON.parse(localStorage.getItem('attendance_people')) || [];
 let isLocked = false;
 let sortableInstances = [];
 let modalSortable = null;
 
 function renderBoard() {
-    const gArea = document.getElementById('group-area');
-    const inArea = document.getElementById('in-incident-area');
-    const offArea = document.getElementById('off-incident-area');
-    const selectHome = document.getElementById('p-group');
-    const selectFixed = document.getElementById('p-fixed');
+    const areas = { group: document.getElementById('group-area'), inCamp: document.getElementById('in-incident-area'), offCamp: document.getElementById('off-incident-area') };
+    const selects = { group: document.getElementById('p-group'), fixed: document.getElementById('p-fixed') };
     
-    gArea.innerHTML = ''; inArea.innerHTML = ''; offArea.innerHTML = ''; 
-    selectHome.innerHTML = ''; selectFixed.innerHTML = '<option value="">-- 無固定位置 --</option>';
+    Object.values(areas).forEach(a => a.innerHTML = '');
+    selects.group.innerHTML = '';
+    selects.fixed.innerHTML = '<option value="">-- 無固定 --</option>';
 
-    config.group.forEach(g => { 
-        gArea.innerHTML += `<div class="row"><div class="label">${g}</div><div class="drag-zone" id="zone-${g}"></div></div>`; 
-        selectHome.innerHTML += `<option value="${g}">${g}</option>`;
-        selectFixed.innerHTML += `<option value="zone-${g}">${g}</option>`;
+    // 渲染區域與選單
+    config.group.forEach(g => {
+        areas.group.innerHTML += `<div class="row"><div class="label">${g}</div><div class="drag-zone" id="zone-${g}"></div></div>`;
+        selects.group.innerHTML += `<option value="${g}">${g}</option>`;
+        selects.fixed.innerHTML += `<option value="zone-${g}">${g}</option>`;
     });
-    config.inCamp.forEach(i => { 
-        inArea.innerHTML += `<div class="row in-row"><div class="label">${i}</div><div class="drag-zone" id="zone-${i}"></div></div>`; 
-        selectFixed.innerHTML += `<option value="zone-${i}">${i} (在營)</option>`;
+    config.inCamp.forEach(i => {
+        areas.inCamp.innerHTML += `<div class="row in-row"><div class="label">${i}</div><div class="drag-zone" id="zone-${i}"></div></div>`;
+        selects.fixed.innerHTML += `<option value="zone-${i}">${i} (在營)</option>`;
     });
-    config.offCamp.forEach(o => { 
-        offArea.innerHTML += `<div class="row off-row"><div class="label">${o}</div><div class="drag-zone" id="zone-${o}"></div></div>`; 
-        selectFixed.innerHTML += `<option value="zone-${o}">${o} (不在營)</option>`;
+    config.offCamp.forEach(o => {
+        areas.offCamp.innerHTML += `<div class="row off-row"><div class="label">${o}</div><div class="drag-zone" id="zone-${o}"></div></div>`;
+        selects.fixed.innerHTML += `<option value="zone-${o}">${o} (不在營)</option>`;
     });
 
     const pos = JSON.parse(localStorage.getItem('attendance_pos')) || {};
-    const seenIds = new Set();
-    
     people.forEach(p => {
-        if (seenIds.has(p.id)) return;
-        seenIds.add(p.id);
         const card = document.createElement('div');
         const w = getRankWeight(p.rank);
-        let cls = 'card-soldier'; if(w>=900) cls='card-officer'; else if(w>=700) cls='card-nco';
-        const fixedClass = p.fixedZone ? ' card-fixed' : '';
-        card.className = `person-card ${cls}${fixedClass}`; 
+        card.className = `person-card ${w>=900?'card-officer':w>=700?'card-nco':'card-soldier'}${p.fixedZone?' card-fixed':''}`; 
         card.id = `person-${p.id}`; card.innerText = `${p.rank} ${p.name}`;
         card.setAttribute('data-id', p.id); card.setAttribute('data-weight', w);
         card.onclick = (e) => { if(!isLocked) { e.stopPropagation(); openModal(p); } };
         
         let targetId = pos[p.id] || `zone-${p.home}`;
-        let targetZone = document.getElementById(targetId);
-        if (!targetZone && config.group.length > 0) { targetId = `zone-${config.group[0]}`; targetZone = document.getElementById(targetId); }
+        let targetZone = document.getElementById(targetId) || document.getElementById(`zone-${config.group[0]}`);
         if(targetZone) targetZone.appendChild(card);
     });
-    document.querySelectorAll('.drag-zone').forEach(z => sortChildren(z));
+    
+    document.querySelectorAll('.drag-zone').forEach(z => {
+        Array.from(z.children).sort((a,b) => b.dataset.weight - a.dataset.weight).forEach(i => z.appendChild(i));
+    });
+    
     initSortable(); updateCounts();
 }
 
-function sortChildren(c) { Array.from(c.children).sort((a,b) => b.dataset.weight - a.dataset.weight).forEach(i => c.appendChild(i)); }
-
 function initSortable() {
-    sortableInstances.forEach(i => i.destroy()); sortableInstances = [];
-    document.querySelectorAll('.drag-zone').forEach(z => {
-        sortableInstances.push(new Sortable(z, { 
-            group: 'attendance', animation: 150, scroll: true, forceFallback: true, disabled: isLocked, 
-            onEnd: (e) => { sortChildren(e.to); saveAll(); updateCounts(); } 
-        }));
-    });
+    sortableInstances.forEach(i => i.destroy());
+    sortableInstances = Array.from(document.querySelectorAll('.drag-zone')).map(z => 
+        new Sortable(z, { group:'attendance', animation:150, disabled:isLocked, onEnd: () => { saveAll(); updateCounts(); } })
+    );
 }
 
-// 2. 修復管理功能切換需重新整理的問題
+// --- 關鍵修復：完全重新初始化管理彈窗 ---
 function openConfig(type) {
     currentCfgType = type;
     const list = document.getElementById('config-list');
     
-    // 強制銷毀並清空實體
-    if (modalSortable) {
-        modalSortable.destroy();
-        modalSortable = null;
-    }
+    // 徹底銷毀現有實體
+    if (modalSortable) { modalSortable.destroy(); modalSortable = null; }
     list.innerHTML = '';
     
-    const items = config[type] || [];
-    items.forEach((it, idx) => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'config-item';
-        itemDiv.innerHTML = `
-            <div class="drag-handle">☰</div>
-            <span class="cfg-text">${it}</span>
-            <button onclick="deleteCfg(${idx})" style="background:#e74c3c; color:white; border-radius:3px; padding:4px 8px;">刪除</button>
-        `;
-        list.appendChild(itemDiv);
+    (config[type] || []).forEach((it, idx) => {
+        const div = document.createElement('div');
+        div.className = 'config-item';
+        div.innerHTML = `<div class="drag-handle">☰</div><span class="t">${it}</span><button onclick="deleteCfg(${idx})" style="background:#e74c3c;color:white;padding:4px 8px;border-radius:4px;">刪除</button>`;
+        list.appendChild(div);
     });
-
-    // 延遲初始化以確保 DOM 渲染完成
-    setTimeout(() => {
-        modalSortable = new Sortable(list, { 
-            handle: '.drag-handle', 
-            animation: 150, 
-            onEnd: () => {
-                config[currentCfgType] = Array.from(list.querySelectorAll('.cfg-text')).map(s => s.innerText);
-                saveAll(); 
-                renderBoard();
-            }
-        });
-    }, 100);
 
     document.getElementById('config-modal').style.display='block';
     document.getElementById('overlay').style.display='block';
+
+    // 延遲綁定拖曳功能
+    setTimeout(() => {
+        modalSortable = new Sortable(list, {
+            handle: '.drag-handle', animation: 150,
+            onEnd: () => {
+                config[currentCfgType] = Array.from(list.querySelectorAll('.t')).map(s => s.innerText);
+                saveAll(); renderBoard();
+            }
+        });
+    }, 50);
 }
 
-function applyFixedZones() {
-    if(!confirm("將固定支援人員移至預設位置？")) return;
-    const pos = JSON.parse(localStorage.getItem('attendance_pos')) || {};
-    people.forEach(p => { if(p.fixedZone) pos[p.id] = p.fixedZone; });
-    localStorage.setItem('attendance_pos', JSON.stringify(pos));
-    renderBoard();
+function saveAll() {
+    localStorage.setItem('attendance_config', JSON.stringify(config));
+    localStorage.setItem('attendance_people', JSON.stringify(people));
+    const p={}; document.querySelectorAll('.person-card').forEach(c => p[c.dataset.id]=c.parentElement.id);
+    localStorage.setItem('attendance_pos', JSON.stringify(p));
 }
 
+function factoryReset() {
+    if(confirm("這將刪除目前手機中儲存的所有名單與設定，且無法恢復！確定嗎？")) {
+        localStorage.clear();
+        location.reload();
+    }
+}
+
+// 其他輔助功能 (回報、鎖定、人員編輯等) 保持精簡
 function updateCounts() {
     let eO=0, eN=0, eS=0, aO=0, aN=0, aS=0;
-    const seenIds = new Set();
-    people.forEach(p => { if (seenIds.has(p.id)) return; seenIds.add(p.id); const w = getRankWeight(p.rank); if(w>=900) eO++; else if(w>=700) eN++; else eS++; });
+    people.forEach(p => { const w = getRankWeight(p.rank); if(w>=900) eO++; else if(w>=700) eN++; else eS++; });
     document.querySelectorAll('.person-card').forEach(card => {
         const person = people.find(x => x.id === card.dataset.id);
-        const parentRow = card.closest('.row');
-        if (parentRow && !parentRow.classList.contains('off-row')) { const w = getRankWeight(person.rank); if(w>=900) aO++; else if(w>=700) aN++; else aS++; }
+        if (person && !card.closest('.row').classList.contains('off-row')) {
+            const w = getRankWeight(person.rank);
+            if(w>=900) aO++; else if(w>=700) aN++; else aS++;
+        }
     });
     document.getElementById('exp-off').innerText=eO; document.getElementById('exp-nco').innerText=eN; document.getElementById('exp-sol').innerText=eS; document.getElementById('exp-total').innerText=eO+eN+eS;
     document.getElementById('act-off').innerText=aO; document.getElementById('act-nco').innerText=aN; document.getElementById('act-sol').innerText=aS; document.getElementById('act-total').innerText=aO+aN+aS;
 }
-
 function toggleLock() { isLocked = !isLocked; document.getElementById('lock-btn').innerText = isLocked ? "🔒 鎖定" : "🔓 解鎖"; renderBoard(); }
-
 function copyReport() {
     let r = `【${new Date().getMonth()+1}/${new Date().getDate()} 回報】\n應到：軍${document.getElementById('exp-off').innerText} 士${document.getElementById('exp-nco').innerText} 兵${document.getElementById('exp-sol').innerText} (${document.getElementById('exp-total').innerText})\n在營：軍${document.getElementById('act-off').innerText} 士${document.getElementById('act-nco').innerText} 兵${document.getElementById('act-sol').innerText} (${document.getElementById('act-total').innerText})\n`;
     config.offCamp.forEach(o => { const cs = document.getElementById(`zone-${o}`).querySelectorAll('.person-card'); if(cs.length>0) r += `● ${o}(${cs.length}員)：${Array.from(cs).map(c=>c.innerText.split(' ')[1]).join('、')}\n`; });
-    const el = document.createElement('textarea'); el.value = r; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); alert("回報已複製！");
+    navigator.clipboard.writeText(r); alert("回報已複製！");
 }
-
 function resetAll() { if(confirm("確定歸隊？")) { localStorage.removeItem('attendance_pos'); renderBoard(); } }
+function applyFixedZones() { if(confirm("將固定人員移至預設位置？")) { const pos = JSON.parse(localStorage.getItem('attendance_pos'))||{}; people.forEach(p => {if(p.fixedZone) pos[p.id]=p.fixedZone;}); localStorage.setItem('attendance_pos', JSON.stringify(pos)); renderBoard(); } }
+function closeAllModals() { document.querySelectorAll('#modal, #config-modal, #data-modal, #overlay').forEach(e => e.style.display='none'); if(modalSortable) modalSortable.destroy(); }
+function openDataModal() { document.getElementById('data-area').value = JSON.stringify({config, people, pos: JSON.parse(localStorage.getItem('attendance_pos'))||{}}); document.getElementById('data-modal').style.display='block'; document.getElementById('overlay').style.display='block'; }
+function importData() { try { const d = JSON.parse(document.getElementById('data-area').value); localStorage.setItem('attendance_config', JSON.stringify(d.config)); localStorage.setItem('attendance_people', JSON.stringify(d.people)); localStorage.setItem('attendance_pos', JSON.stringify(d.pos)); location.reload(); } catch(e) { alert("格式錯誤！"); } }
+function openModal(p = null) {
+    if(isLocked) return;
+    const delBtn = document.getElementById('btn-delete');
+    if(p) { document.getElementById('edit-id').value=p.id; document.getElementById('p-rank').value=p.rank; document.getElementById('p-name').value=p.name; document.getElementById('p-group').value=p.home; document.getElementById('p-fixed').value=p.fixedZone||""; delBtn.style.display='block'; }
+    else { document.getElementById('edit-id').value=''; document.getElementById('p-rank').value=''; document.getElementById('p-name').value=''; document.getElementById('p-fixed').value=''; delBtn.style.display='none'; }
+    document.getElementById('modal').style.display='block'; document.getElementById('overlay').style.display='block';
+}
+function savePerson() {
+    const id=document.getElementById('edit-id').value, r=document.getElementById('p-rank').value, n=document.getElementById('p-name').value, h=document.getElementById('p-group').value, f=document.getElementById('p-fixed').value;
+    if(id) { const i=people.findIndex(x=>x.id===id); people[i]={id, rank:r, name:n, home:h, fixedZone:f}; } else { people.push({id:Date.now().toString(), rank:r, name:n, home:h, fixedZone:f}); }
+    saveAll(); closeAllModals(); renderBoard();
+}
+function deletePerson() { if(confirm("確定刪除？")) { people=people.filter(x=>x.id!==document.getElementById('edit-id').value); saveAll(); closeAllModals(); renderBoard(); } }
 function addConfigItem() { const n = document.getElementById('new-config-name').value; if(n) { config[currentCfgType].push(n); saveAll(); openConfig(currentCfgType); renderBoard(); document.getElementById('new-config-name').value=''; } }
 function deleteCfg(idx) { config[currentCfgType].splice(idx, 1); saveAll(); openConfig(currentCfgType); renderBoard(); }
-function saveAll() { localStorage.setItem('attendance_config', JSON.stringify(config)); localStorage.setItem('attendance_people', JSON.stringify(people)); const p={}; document.querySelectorAll('.person-card').forEach(c => p[c.dataset.id]=c.parentElement.id); localStorage.setItem('attendance_pos', JSON.stringify(p)); }
-function closeAllModals() { document.querySelectorAll('#modal, #config-modal, #data-modal, #overlay').forEach(e => e.style.display='none'); if(modalSortable) modalSortable.destroy(); }
-function openDataModal() { const data = { config, people, pos: JSON.parse(localStorage.getItem('attendance_pos')) || {} }; document.getElementById('data-area').value = JSON.stringify(data); document.getElementById('data-modal').style.display='block'; document.getElementById('overlay').style.display='block'; }
-function importData() { try { const d = JSON.parse(document.getElementById('data-area').value); if(confirm("確定匯入？")) { localStorage.setItem('attendance_config', JSON.stringify(d.config)); localStorage.setItem('attendance_people', JSON.stringify(d.people)); localStorage.setItem('attendance_pos', JSON.stringify(d.pos)); location.reload(); } } catch(e) { alert("格式錯誤！"); } }
-function openModal(p = null) { if(isLocked) return; const delBtn = document.getElementById('btn-delete'); if(p) { document.getElementById('edit-id').value=p.id; document.getElementById('p-rank').value=p.rank; document.getElementById('p-name').value=p.name; document.getElementById('p-group').value=p.home; document.getElementById('p-fixed').value=p.fixedZone || ""; delBtn.style.display='block'; } else { document.getElementById('edit-id').value=''; document.getElementById('p-rank').value=''; document.getElementById('p-name').value=''; document.getElementById('p-fixed').value=''; delBtn.style.display='none'; } document.getElementById('modal').style.display='block'; document.getElementById('overlay').style.display='block'; }
-function savePerson() { const id=document.getElementById('edit-id').value, r=document.getElementById('p-rank').value, n=document.getElementById('p-name').value, h=document.getElementById('p-group').value, f=document.getElementById('p-fixed').value; if(id) { const i=people.findIndex(x=>x.id===id); people[i]={id, rank:r, name:n, home:h, fixedZone:f}; } else { people.push({id:Date.now().toString(), rank:r, name:n, home:h, fixedZone:f}); } saveAll(); closeAllModals(); renderBoard(); }
-function deletePerson() { if(confirm("確定刪除？")) { people=people.filter(x=>x.id!==document.getElementById('edit-id').value); saveAll(); closeAllModals(); renderBoard(); } }
 
 renderBoard();
 </script>
