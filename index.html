@@ -9,20 +9,20 @@
         :root {
             --group-bg: #e8ecef; --in-camp-bg: #fff9c4; --off-camp-bg: #ffcdd2;
             --primary: #2c3e50; --officer: #ff5252; --nco: #fbc02d; --soldier: #69f0ae;
+            --female-bg: #ffd1dc; --female-border: #ff85a2;
         }
-        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f5f5f5; margin: 0; padding: 0 8px 150px 8px; }
+        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f5f5f5; margin: 0; padding: 0 8px 180px 8px; }
 
-        /* 凍結區域 */
         .sticky-header { position: sticky; top: 0; z-index: 1000; background-color: #f5f5f5; padding-top: 8px; padding-bottom: 5px; }
         .summary-table { width: 100%; background: #fff; border-collapse: collapse; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; text-align: center; font-size: 0.75em; margin-bottom: 5px; }
-        .summary-table th { background: #34495e; color: white; padding: 4px; }
+        .summary-table th { background: #34495e; color: white; padding: 6px; cursor: pointer; }
         .summary-table td { padding: 6px; font-weight: bold; border: 1px solid #eee; }
+        /* 隱藏休假列 */
+        #leave-row { display: none; background-color: #fef9f9; color: #c62828; }
 
-        /* 搜尋框容器 */
-        #search-bar-container { display: none; margin-bottom: 8px; position: relative; }
-        .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 20px; font-size: 14px; box-sizing: border-box; outline: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        #search-bar-container { display: none; margin-bottom: 8px; }
+        .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 20px; font-size: 14px; box-sizing: border-box; outline: none; }
 
-        /* 看板樣式 */
         .section-header { display: flex; justify-content: space-between; align-items: center; background: var(--primary); color: white; padding: 5px 12px; margin-top: 12px; border-radius: 5px; }
         .section-header button { background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 2px 8px; font-size: 0.75em; border-radius: 4px; }
         .row { display: flex; background: white; border-bottom: 1px solid #ddd; min-height: 50px; }
@@ -33,34 +33,44 @@
         .drag-zone { flex-grow: 1; padding: 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 4px; min-height: 40px; }
         .person-card { padding: 5px 2px; border-radius: 3px; font-size: 0.8em; text-align: center; box-shadow: 1px 1px 2px rgba(0,0,0,0.1); font-weight: bold; border: 1px solid rgba(0,0,0,0.05); position: relative; }
         .card-fixed::after { content: "📌"; position: absolute; top: -2px; right: -2px; font-size: 8px; }
+        
+        /* 女生樣式 */
+        .card-female { background-color: var(--female-bg) !important; border: 1.5px solid var(--female-border) !important; color: #333 !important; }
+
         .card-officer { background-color: var(--officer); color: white; }
         .card-nco { background-color: var(--nco); color: #222; }
         .card-soldier { background-color: var(--soldier); color: #222; }
 
-        /* 底部 2x3 按鈕 */
         .btn-container { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 10px 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; box-shadow: 0 -2px 15px rgba(0,0,0,0.15); z-index: 1000; }
         .btn-container button { padding: 12px 0; border: none; border-radius: 6px; font-weight: bold; font-size: 0.8em; color: white; }
 
-        /* 彈窗 */
-        #modal, #config-modal, #data-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 2000; width: 88%; border-radius: 10px; max-height: 85vh; overflow-y: auto; }
+        /* 快速移動提示 */
+        #quick-move-hint { display: none; background: #e74c3c; color: white; text-align: center; padding: 5px; font-size: 0.8em; font-weight: bold; }
+
+        #modal, #config-modal, #data-modal, #quick-move-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 2000; width: 88%; border-radius: 10px; max-height: 85vh; overflow-y: auto; }
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 1500; }
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
         .config-item { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border: 1px solid #ddd; margin-bottom: 8px; padding: 8px 12px; border-radius: 6px; }
         .drag-handle { cursor: grab; padding: 10px; color: #999; font-size: 1.2em; touch-action: none; }
     </style>
 </head>
-<body onclick="autoHideSearch()">
+<body onclick="handleGlobalClick(event)">
 
 <div class="sticky-header">
+    <div id="quick-move-hint">⚡ 快速移動模式：點擊人員即可移至 <span id="target-label">?</span></div>
     <table class="summary-table">
-        <thead><tr><th>項目</th><th>軍</th><th>士</th><th>兵</th><th>總計</th></tr></thead>
+        <thead onclick="toggleLeaveRow()">
+            <tr><th colspan="5">數位點名統計表 (點擊展開休假)</th></tr>
+            <tr style="background: #455a64; color: white;"><th>項目</th><th>軍</th><th>士</th><th>兵</th><th>總計</th></tr>
+        </thead>
         <tbody>
-            <tr class="row-header"><td>應到</td><td id="exp-off">0</td><td id="exp-nco">0</td><td id="exp-sol">0</td><td id="exp-total">0</td></tr>
+            <tr><td>應到</td><td id="exp-off">0</td><td id="exp-nco">0</td><td id="exp-sol">0</td><td id="exp-total">0</td></tr>
             <tr style="color: #2980b9;"><td>在營</td><td id="act-off">0</td><td id="act-nco">0</td><td id="act-sol">0</td><td id="act-total">0</td></tr>
+            <tr id="leave-row"><td>休假</td><td id="lv-off">0</td><td id="lv-nco">0</td><td id="lv-sol">0</td><td id="lv-total">0</td></tr>
         </tbody>
     </table>
     <div id="search-bar-container" onclick="event.stopPropagation()">
-        <input type="text" id="search-box" class="search-input" placeholder="🔍 搜尋姓名或階級..." oninput="filterPeople()" onblur="autoHideSearch()">
+        <input type="text" id="search-box" class="search-input" placeholder="🔍 搜尋姓名或階級..." oninput="filterPeople()">
     </div>
 </div>
 
@@ -77,12 +87,36 @@
     <button onclick="toggleLock(event)" id="lock-btn" style="background:#f39c12;">🔓 解鎖</button>
     <button onclick="copyReport()" style="background:#8e44ad;">📋 回報</button>
     <button onclick="openModal()" style="background:#27ae60;">＋ 人員</button>
+    
     <button onclick="toggleSearch(event)" style="background:#3498db;">🔍 搜尋</button>
-    <button onclick="applyFixedZones()" style="background:#d35400;">📌 派拔</button>
+    <button onclick="openQuickMove()" style="background:#e67e22;">⚡ 快速</button>
     <button onclick="openDataModal()" style="background:#34495e;">💾 設定</button>
 </div>
 
 <div id="overlay" onclick="closeAllModals()"></div>
+
+<div id="quick-move-modal">
+    <h3>快速移動模式</h3>
+    <p style="font-size: 0.8em; color: #666;">選擇目標區域後，直接點擊看板上的人員即可完成移動。</p>
+    <label>目標區域：</label>
+    <select id="quick-move-target-select"></select>
+    <button onclick="startQuickMove()" style="background:#e67e22; color:white; width:100%; margin-top:10px; padding:12px;">開啟模式</button>
+    <button onclick="stopQuickMove()" style="background:#7f8c8d; color:white; width:100%; margin-top:10px; padding:12px;">關閉模式</button>
+</div>
+
+<div id="modal">
+    <h3>人員管理</h3>
+    <input type="hidden" id="edit-id">
+    <input type="text" id="p-rank" placeholder="階級"><input type="text" id="p-name" placeholder="姓名">
+    <label><input type="checkbox" id="p-female" style="width:auto;"> 女性人員 (粉紅標示)</label>
+    <label>預設組別：</label><select id="p-group"></select>
+    <label>固定位置：</label><select id="p-fixed"><option value="">-- 無固定 --</option></select>
+    <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+        <button onclick="savePerson()" style="background:#27ae60; color:white; padding:10px 20px;">儲存</button>
+        <button id="btn-delete" onclick="deletePerson()" style="background:#e74c3c; color:white;">刪除</button>
+        <button onclick="closeAllModals()">取消</button>
+    </div>
+</div>
 
 <div id="config-modal">
     <h3 id="config-title-text">管理順序</h3>
@@ -91,42 +125,30 @@
         <input type="text" id="new-config-name" placeholder="名稱..." style="margin: 0;">
         <button onclick="addConfigItem()" style="background:#27ae60; color:white; padding: 0 15px;">＋</button>
     </div>
-    <button onclick="closeAllModals()" style="width:100%; margin-top: 20px; background: #34495e; color: white; padding: 12px 0; border-radius: 6px;">完成並關閉</button>
-</div>
-
-<div id="modal">
-    <h3>人員管理</h3>
-    <input type="hidden" id="edit-id">
-    <input type="text" id="p-rank" placeholder="階級"><input type="text" id="p-name" placeholder="姓名">
-    <label>預設組別：</label><select id="p-group"></select>
-    <label>固定位置：</label><select id="p-fixed"><option value="">-- 無固定 --</option></select>
-    <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-        <button onclick="savePerson()" style="background:#27ae60; color:white;">儲存</button>
-        <button id="btn-delete" onclick="deletePerson()" style="background:#e74c3c; color:white;">刪除</button>
-        <button onclick="closeAllModals()">取消</button>
-    </div>
+    <button onclick="closeAllModals()" style="width:100%; margin-top: 20px; background: #34495e; color: white; padding: 12px 0;">關閉</button>
 </div>
 
 <div id="data-modal">
-    <h3>數據備份與重置</h3>
+    <h3>數據與系統</h3>
     <textarea id="data-area" placeholder="在此匯入資料..."></textarea>
     <button onclick="importData()" style="background:#d32f2f; color:white; width:100%; margin-bottom: 10px;">📥 匯入資料</button>
+    <button onclick="applyFixedZones()" style="background:#d35400; color:white; width:100%; margin-bottom: 10px;">📌 執行固定派拔</button>
     <button onclick="resetAll()" style="background:#2980b9; color:white; width:100%; margin-bottom: 10px;">⟲ 全員歸隊</button>
-    <button onclick="factoryReset()" style="background:#7f8c8d; color:white; width:100%;">🔥 徹底重置 (清空暫存)</button>
+    <button onclick="factoryReset()" style="background:#7f8c8d; color:white; width:100%;">🔥 徹底重置</button>
     <button onclick="closeAllModals()" style="width:100%; margin-top: 15px;">關閉</button>
 </div>
 
 <script>
 // --- 基礎變數 ---
-const initialPeople = []; 
 const defaultConfig = {
     group: ["連部組","營部組","通信組","武化組","飛雷組","通保組","CP組","保養排","履車組","輪車組","醫務組","食勤組","預財組","未分類"],
     inCamp: ["補休", "衛哨", "戰情", "調度", "彈藥", "軍械", "割草"],
     offCamp: ["休假", "洽公", "受訓", "支援", "招募", "託管"]
 };
 let config = JSON.parse(localStorage.getItem('attendance_config')) || defaultConfig;
-let people = JSON.parse(localStorage.getItem('attendance_people')) || initialPeople;
+let people = JSON.parse(localStorage.getItem('attendance_people')) || [];
 let isLocked = false, sortableInstances = [], modalSortable = null, currentCfgType = '';
+let quickMoveMode = false, quickMoveTarget = '';
 
 function getRankWeight(rank) {
     let w = 0;
@@ -136,7 +158,53 @@ function getRankWeight(rank) {
     return w;
 }
 
-// --- 智慧搜尋收合邏輯 ---
+// --- 統計表摺疊 ---
+function toggleLeaveRow() {
+    const row = document.getElementById('leave-row');
+    row.style.display = (row.style.display === 'table-row') ? 'none' : 'table-row';
+}
+
+// --- 快速移動功能 ---
+function openQuickMove() {
+    const select = document.getElementById('quick-move-target-select');
+    select.innerHTML = '';
+    config.inCamp.forEach(i => select.innerHTML += `<option value="zone-${i}">${i} (在營事故)</option>`);
+    config.offCamp.forEach(o => select.innerHTML += `<option value="zone-${o}">${o} (不在營事故)</option>`);
+    config.group.forEach(g => select.innerHTML += `<option value="zone-${g}">${g} (工作組別)</option>`);
+    
+    document.getElementById('quick-move-modal').style.display = 'block';
+    document.getElementById('overlay').style.display = 'block';
+}
+
+function startQuickMove() {
+    quickMoveTarget = document.getElementById('quick-move-target-select').value;
+    quickMoveMode = true;
+    const label = document.getElementById('quick-move-target-select').options[document.getElementById('quick-move-target-select').selectedIndex].text;
+    document.getElementById('target-label').innerText = label;
+    document.getElementById('quick-move-hint').style.display = 'block';
+    closeAllModals();
+}
+
+function stopQuickMove() {
+    quickMoveMode = false;
+    document.getElementById('quick-move-hint').style.display = 'none';
+    closeAllModals();
+}
+
+function handleCardClick(p) {
+    if (quickMoveMode) {
+        // 快速移動模式：直接變更位置
+        const pos = JSON.parse(localStorage.getItem('attendance_pos')) || {};
+        pos[p.id] = quickMoveTarget;
+        localStorage.setItem('attendance_pos', JSON.stringify(pos));
+        renderBoard();
+    } else {
+        // 一般模式：點擊開啟編輯
+        if(!isLocked) openModal(p);
+    }
+}
+
+// --- 搜尋與全域點擊 ---
 function toggleSearch(e) {
     if(e) e.stopPropagation();
     const bar = document.getElementById('search-bar-container');
@@ -145,11 +213,10 @@ function toggleSearch(e) {
     if(isHidden) document.getElementById('search-box').focus();
 }
 
-function autoHideSearch() {
-    const box = document.getElementById('search-box');
+function handleGlobalClick(e) {
     const bar = document.getElementById('search-bar-container');
-    // 如果裡面沒有字，就自動關閉搜尋框
-    if (box.value === "") {
+    const box = document.getElementById('search-box');
+    if (bar.style.display === 'block' && box.value === '') {
         bar.style.display = 'none';
     }
 }
@@ -161,39 +228,7 @@ function filterPeople() {
     });
 }
 
-// --- 管理功能 ---
-function openConfig(type) {
-    currentCfgType = type;
-    const root = document.getElementById('config-list-root');
-    if (modalSortable) { modalSortable.destroy(); modalSortable = null; }
-    root.innerHTML = '';
-    const listId = 'list-' + Date.now();
-    const newList = document.createElement('div');
-    newList.id = listId;
-    root.appendChild(newList);
-
-    (config[type] || []).forEach((it, idx) => {
-        const item = document.createElement('div');
-        item.className = 'config-item';
-        item.innerHTML = `<div class="drag-handle">☰</div><div class="cfg-txt" style="flex-grow:1; font-weight:bold;">${it}</div><button onclick="deleteCfg(${idx})" style="background:#e74c3c; color:white; padding:5px 8px; border-radius:4px; font-size:0.8em;">刪除</button>`;
-        newList.appendChild(item);
-    });
-
-    document.getElementById('config-modal').style.display = 'block';
-    document.getElementById('overlay').style.display = 'block';
-
-    requestAnimationFrame(() => {
-        modalSortable = Sortable.create(newList, {
-            handle: '.drag-handle', animation: 150, forceFallback: true,
-            onEnd: () => {
-                config[currentCfgType] = Array.from(newList.children).map(el => el.querySelector('.cfg-txt').innerText);
-                saveAll(); renderBoard();
-            }
-        });
-    });
-}
-
-// --- 看板渲染與系統功能 ---
+// --- 渲染核心 ---
 function renderBoard() {
     const areas = { group: document.getElementById('group-area'), inCamp: document.getElementById('in-incident-area'), offCamp: document.getElementById('off-incident-area') };
     const selHome = document.getElementById('p-group'), selFix = document.getElementById('p-fixed');
@@ -221,17 +256,26 @@ function renderBoard() {
         seenIds.add(p.id);
         const card = document.createElement('div');
         const w = getRankWeight(p.rank);
-        card.className = `person-card ${w>=900?'card-officer':w>=700?'card-nco':'card-soldier'}${p.fixedZone?' card-fixed':''}`; 
+        
+        // 樣式組合
+        let colorCls = w>=900?'card-officer':w>=700?'card-nco':'card-soldier';
+        if (p.female) colorCls = 'card-female';
+        
+        card.className = `person-card ${colorCls}${p.fixedZone?' card-fixed':''}`; 
         card.id = `person-${p.id}`; card.innerText = `${p.rank} ${p.name}`;
         card.setAttribute('data-id', p.id); card.setAttribute('data-weight', w);
-        card.onclick = (e) => { if(!isLocked) { e.stopPropagation(); openModal(p); } };
+        card.onclick = (e) => { e.stopPropagation(); handleCardClick(p); };
+        
         let targetId = pos[p.id] || `zone-${p.home}`;
         let targetZone = document.getElementById(targetId) || document.getElementById(`zone-${config.group[0]}`);
         if(targetZone) targetZone.appendChild(card);
     });
+    
+    // 關鍵修正：渲染後強制按階級排序
     document.querySelectorAll('.drag-zone').forEach(z => {
         Array.from(z.children).sort((a,b) => b.dataset.weight - a.dataset.weight).forEach(i => z.appendChild(i));
     });
+    
     initSortable(); updateCounts(); filterPeople();
 }
 
@@ -240,12 +284,66 @@ function initSortable() {
     sortableInstances = Array.from(document.querySelectorAll('.drag-zone')).map(z => 
         new Sortable(z, { 
             group:'attendance', animation:150, forceFallback: true, scroll: true, disabled:isLocked, 
-            onEnd: () => { 
+            onEnd: (e) => { 
+                // 拖拉後強制重新排序該區塊
+                Array.from(e.to.children).sort((a,b) => b.dataset.weight - a.dataset.weight).forEach(i => e.to.appendChild(i));
                 saveAll(); updateCounts(); 
-                autoHideSearch(); // 拖拉磁鐵時，如果搜尋框是空的就關掉
             } 
         })
     );
+}
+
+// --- 統計邏輯 ---
+function updateCounts() {
+    let eO=0, eN=0, eS=0, aO=0, aN=0, aS=0, lO=0, lN=0, lS=0;
+    const seen = new Set();
+    people.forEach(p => { 
+        if (seen.has(p.id)) return; seen.add(p.id); 
+        const w = getRankWeight(p.rank); if(w>=900) eO++; else if(w>=700) eN++; else eS++; 
+    });
+    
+    document.querySelectorAll('.person-card').forEach(card => {
+        const p = people.find(x => x.id === card.dataset.id);
+        const zone = card.closest('.row');
+        if (p && zone) {
+            const w = getRankWeight(p.rank);
+            if (!zone.classList.contains('off-row')) {
+                // 在營
+                if(w>=900) aO++; else if(w>=700) aN++; else aS++;
+            } else {
+                // 休假 (不在營)
+                if(w>=900) lO++; else if(w>=700) lN++; else lS++;
+            }
+        }
+    });
+    document.getElementById('exp-off').innerText=eO; document.getElementById('exp-nco').innerText=eN; document.getElementById('exp-sol').innerText=eS; document.getElementById('exp-total').innerText=eO+eN+eS;
+    document.getElementById('act-off').innerText=aO; document.getElementById('act-nco').innerText=aN; document.getElementById('act-sol').innerText=aS; document.getElementById('act-total').innerText=aO+aN+aS;
+    document.getElementById('lv-off').innerText=lO; document.getElementById('lv-nco').innerText=lN; document.getElementById('lv-sol').innerText=lS; document.getElementById('lv-total').innerText=lO+lN+lS;
+}
+
+// --- 其餘管理與設定功能 ---
+function openConfig(type) {
+    currentCfgType = type;
+    const root = document.getElementById('config-list-root');
+    if (modalSortable) { modalSortable.destroy(); modalSortable = null; }
+    root.innerHTML = '';
+    const listId = 'list-' + Date.now();
+    const newList = document.createElement('div');
+    newList.id = listId; root.appendChild(newList);
+    (config[type] || []).forEach((it, idx) => {
+        const item = document.createElement('div');
+        item.className = 'config-item';
+        item.innerHTML = `<div class="drag-handle">☰</div><div class="cfg-txt" style="flex-grow:1; font-weight:bold;">${it}</div><button onclick="deleteCfg(${idx})" style="background:#e74c3c; color:white; padding:5px 8px; border-radius:4px; font-size:0.8em;">刪除</button>`;
+        newList.appendChild(item);
+    });
+    document.getElementById('config-modal').style.display = 'block';
+    document.getElementById('overlay').style.display = 'block';
+    requestAnimationFrame(() => {
+        modalSortable = Sortable.create(newList, { handle: '.drag-handle', animation: 150, forceFallback: true, onEnd: () => {
+            config[currentCfgType] = Array.from(newList.children).map(el => el.querySelector('.cfg-txt').innerText);
+            saveAll(); renderBoard();
+        }});
+    });
 }
 
 function saveAll() {
@@ -254,19 +352,6 @@ function saveAll() {
     const p={}; document.querySelectorAll('.person-card').forEach(c => p[c.dataset.id]=c.parentElement.id);
     localStorage.setItem('attendance_pos', JSON.stringify(p));
 }
-
-function updateCounts() {
-    let eO=0, eN=0, eS=0, aO=0, aN=0, aS=0;
-    const seen = new Set();
-    people.forEach(p => { if (seen.has(p.id)) return; seen.add(p.id); const w = getRankWeight(p.rank); if(w>=900) eO++; else if(w>=700) eN++; else eS++; });
-    document.querySelectorAll('.person-card').forEach(card => {
-        const p = people.find(x => x.id === card.dataset.id);
-        if (p && !card.closest('.row').classList.contains('off-row')) { const w = getRankWeight(p.rank); if(w>=900) aO++; else if(w>=700) aN++; else aS++; }
-    });
-    document.getElementById('exp-off').innerText=eO; document.getElementById('exp-nco').innerText=eN; document.getElementById('exp-sol').innerText=eS; document.getElementById('exp-total').innerText=eO+eN+eS;
-    document.getElementById('act-off').innerText=aO; document.getElementById('act-nco').innerText=aN; document.getElementById('act-sol').innerText=aS; document.getElementById('act-total').innerText=aO+aN+aS;
-}
-
 function toggleLock(e) { e.stopPropagation(); isLocked = !isLocked; document.getElementById('lock-btn').innerText = isLocked ? "🔒 鎖定" : "🔓 解鎖"; renderBoard(); }
 function copyReport() {
     let r = `【${new Date().getMonth()+1}/${new Date().getDate()} 回報】\n應到：軍${document.getElementById('exp-off').innerText} 士${document.getElementById('exp-nco').innerText} 兵${document.getElementById('exp-sol').innerText} (${document.getElementById('exp-total').innerText})\n在營：軍${document.getElementById('act-off').innerText} 士${document.getElementById('act-nco').innerText} 兵${document.getElementById('act-sol').innerText} (${document.getElementById('act-total').innerText})\n`;
@@ -274,29 +359,34 @@ function copyReport() {
     const el = document.createElement('textarea'); el.value = r; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); alert("回報已複製！");
 }
 function resetAll() { if(confirm("確定全員歸隊？")) { localStorage.removeItem('attendance_pos'); renderBoard(); closeAllModals(); } }
-function applyFixedZones() { if(confirm("執行固定人員派拔？")) { const pos = JSON.parse(localStorage.getItem('attendance_pos'))||{}; people.forEach(p => {if(p.fixedZone) pos[p.id]=p.fixedZone;}); localStorage.setItem('attendance_pos', JSON.stringify(pos)); renderBoard(); } }
+function applyFixedZones() { if(confirm("執行固定人員派拔？")) { const pos = JSON.parse(localStorage.getItem('attendance_pos'))||{}; people.forEach(p => {if(p.fixedZone) pos[p.id]=p.fixedZone;}); localStorage.setItem('attendance_pos', JSON.stringify(pos)); renderBoard(); closeAllModals(); } }
 function factoryReset() { if(confirm("確定重置？所有資料將清空！")) { localStorage.clear(); location.reload(); } }
-function closeAllModals() { 
-    document.querySelectorAll('#modal, #config-modal, #data-modal, #overlay').forEach(e => e.style.display='none'); 
-    if (modalSortable) { modalSortable.destroy(); modalSortable = null; }
-    autoHideSearch(); // 關閉彈窗時檢查搜尋框
-}
+function closeAllModals() { document.querySelectorAll('#modal, #config-modal, #data-modal, #overlay, #quick-move-modal').forEach(e => e.style.display='none'); if (modalSortable) { modalSortable.destroy(); modalSortable = null; } }
 function openDataModal() { document.getElementById('data-area').value = JSON.stringify({config, people, pos: JSON.parse(localStorage.getItem('attendance_pos'))||{}}); document.getElementById('data-modal').style.display='block'; document.getElementById('overlay').style.display='block'; }
 function importData() { try { const d = JSON.parse(document.getElementById('data-area').value); localStorage.setItem('attendance_config', JSON.stringify(d.config)); localStorage.setItem('attendance_people', JSON.stringify(d.people)); localStorage.setItem('attendance_pos', JSON.stringify(d.pos)); location.reload(); } catch(e) { alert("格式錯誤！"); } }
+
 function openModal(p = null) {
     if(isLocked) return;
     const delBtn = document.getElementById('btn-delete');
-    if(p) { document.getElementById('edit-id').value=p.id; document.getElementById('p-rank').value=p.rank; document.getElementById('p-name').value=p.name; document.getElementById('p-group').value=p.home; document.getElementById('p-fixed').value=p.fixedZone||""; delBtn.style.display='block'; }
-    else { document.getElementById('edit-id').value=''; document.getElementById('p-rank').value=''; document.getElementById('p-name').value=''; document.getElementById('p-fixed').value=''; delBtn.style.display='none'; }
+    if(p) { 
+        document.getElementById('edit-id').value=p.id; 
+        document.getElementById('p-rank').value=p.rank; 
+        document.getElementById('p-name').value=p.name; 
+        document.getElementById('p-group').value=p.home; 
+        document.getElementById('p-fixed').value=p.fixedZone||""; 
+        document.getElementById('p-female').checked = p.female || false;
+        delBtn.style.display='block'; 
+    }
+    else { document.getElementById('edit-id').value=''; document.getElementById('p-rank').value=''; document.getElementById('p-name').value=''; document.getElementById('p-fixed').value=''; document.getElementById('p-female').checked = false; delBtn.style.display='none'; }
     document.getElementById('modal').style.display='block'; document.getElementById('overlay').style.display='block';
 }
 function savePerson() {
-    const id=document.getElementById('edit-id').value, r=document.getElementById('p-rank').value, n=document.getElementById('p-name').value, h=document.getElementById('p-group').value, f=document.getElementById('p-fixed').value;
-    if(id) { const i=people.findIndex(x=>x.id===id); people[i]={id, rank:r, name:n, home:h, fixedZone:f}; } else { people.push({id:Date.now().toString(), rank:r, name:n, home:h, fixedZone:f}); }
+    const id=document.getElementById('edit-id').value, r=document.getElementById('p-rank').value, n=document.getElementById('p-name').value, h=document.getElementById('p-group').value, f=document.getElementById('p-fixed').value, fem=document.getElementById('p-female').checked;
+    if(id) { const i=people.findIndex(x=>x.id===id); people[i]={id, rank:r, name:n, home:h, fixedZone:f, female:fem}; } else { people.push({id:Date.now().toString(), rank:r, name:n, home:h, fixedZone:f, female:fem}); }
     saveAll(); closeAllModals(); renderBoard();
 }
 function deletePerson() { if(confirm("確定刪除？")) { people=people.filter(x=>x.id!==document.getElementById('edit-id').value); saveAll(); closeAllModals(); renderBoard(); } }
-function addConfigItem() { const n = document.getElementById('new-config-name').value; if(n) { config[currentCfgType].push(n); saveAll(); openConfig(currentCfgType); renderBoard(); document.getElementById('new-config-name').value=''; } }
+function addConfigItem() { if(document.getElementById('new-config-name').value) { config[currentCfgType].push(document.getElementById('new-config-name').value); saveAll(); openConfig(currentCfgType); renderBoard(); document.getElementById('new-config-name').value=''; } }
 function deleteCfg(idx) { config[currentCfgType].splice(idx, 1); saveAll(); openConfig(currentCfgType); renderBoard(); }
 
 renderBoard();
