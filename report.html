@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>緊急回報系統 v4 (內建完整名單)</title>
+    <title>緊急回報系統 v4.1 (中文化管理)</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 15px; background-color: #f0f2f5; line-height: 1.5; }
         .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -23,7 +23,7 @@
 <body>
 
 <div class="container">
-    <h2>🚑 聯絡表產生器 v4</h2>
+    <h2>🚑 聯絡表產生器 v4.1</h2>
 
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理名單</button>
 
@@ -34,7 +34,7 @@
             <option value="SongShan">嵩山營區</option>
             <option value="Duty">戰情官</option>
         </select>
-        <input type="text" id="newUnit" placeholder="單位 (例: 醫務所 / 防空營)">
+        <input type="text" id="newUnit" placeholder="單位 (例: 防空營)">
         <input type="text" id="newRank" placeholder="階級 (例: 上士)">
         <input type="text" id="newName" placeholder="姓名">
         <input type="text" id="newPhone" placeholder="電話/民線">
@@ -43,7 +43,7 @@
         <hr>
         <span class="section-title">目前人員清單 (點擊可刪除)</span>
         <div id="contactList"></div>
-        <button onclick="resetToDefault()" style="background:#d93025; font-size:12px; padding:5px; margin-top:10px;">⚠️ 重設回預設名單 (清空自定義)</button>
+        <button onclick="resetToDefault()" style="background:#d93025; font-size:12px; padding:5px; margin-top:10px;">⚠️ 重設回預設名單 (清空手動新增內容)</button>
     </div>
     
     <div class="section">
@@ -91,9 +91,8 @@
 </div>
 
 <script>
-// --- 幫你加回來的完整預設名單 ---
 const defaultData = {
-    坪頂: [
+    PingDing: [
         { unit: "防空營", rank: "上士", name: "蔡淑賢", phone: "0954-139130" },
         { unit: "防空營", rank: "中士", name: "王建蒝", phone: "0988-610231" },
         { unit: "防空營", rank: "下士", name: "謝佳霖", phone: "0980-516200" },
@@ -102,7 +101,7 @@ const defaultData = {
         { unit: "防空營", rank: "上士", name: "陳雍文", phone: "0975-268823" },
         { unit: "防空營", rank: "上士", name: "蘇精翰", phone: "0977-278668" }
     ],
-    嵩山: [
+    SongShan: [
         { unit: "防空暨飛彈指揮部", rank: "少校", name: "林政融", phone: "0978-125970" },
         { unit: "防空暨飛彈指揮部", rank: "少校", name: "鄭光惠", phone: "0970-595206" },
         { unit: "防空暨飛彈指揮部", rank: "上尉", name: "黃則誠", phone: "0980-634376" },
@@ -115,7 +114,7 @@ const defaultData = {
         { unit: "防空暨飛彈指揮部", rank: "下士", name: "張宇婷", phone: "0930-526663" },
         { unit: "防空暨飛彈指揮部", rank: "下士", name: "盧傳承", phone: "0916-008996" }
     ],
-    戰情: [
+    Duty: [
         { title: "通信官中尉", name: "王蔚", civ: "07-8913762", mil: "712318" },
         { title: "情報官中尉", name: "陳家俊", civ: "07-8913762", mil: "712318" },
         { title: "飛技官中尉", name: "洪星瑋", civ: "07-8913762", mil: "712318" },
@@ -124,15 +123,22 @@ const defaultData = {
     ]
 };
 
-let db = JSON.parse(localStorage.getItem('ems_contacts_v4')) || JSON.parse(JSON.stringify(defaultData));
+// 為了讓更新生效，我們檢查舊版本號，若不同則清空快取使用新名單
+const VERSION = "4.1";
+let db = JSON.parse(localStorage.getItem('ems_contacts_v41'));
+
+if (!db) {
+    db = JSON.parse(JSON.stringify(defaultData));
+    localStorage.setItem('ems_contacts_v41', JSON.stringify(db));
+}
 
 function saveDB() {
-    localStorage.setItem('ems_contacts_v4', JSON.stringify(db));
+    localStorage.setItem('ems_contacts_v41', JSON.stringify(db));
     initApp();
 }
 
 function resetToDefault() {
-    if(confirm('這將清空你手動新增的人員，並恢復到我幫你設好的初始名單。確定嗎？')) {
+    if(confirm('這將恢復到我幫你設好的初始名單（包含防空營醫務所人員）。確定嗎？')) {
         db = JSON.parse(JSON.stringify(defaultData));
         saveDB();
     }
@@ -173,10 +179,12 @@ function deleteContact(type, index) {
 function renderAdminList() {
     const listDiv = document.getElementById('contactList');
     listDiv.innerHTML = '';
+    const typeNames = { PingDing: "坪頂", SongShan: "嵩山", Duty: "戰情" };
+    
     ['PingDing', 'SongShan', 'Duty'].forEach(type => {
         db[type].forEach((p, i) => {
             const name = type === 'Duty' ? p.title + p.name : p.unit + p.rank + p.name;
-            listDiv.innerHTML += `<div class="contact-item"><span>[${type}] ${name}</span><span class="del-btn" onclick="deleteContact('${type}', ${i})">✕</span></div>`;
+            listDiv.innerHTML += `<div class="contact-item"><span>[${typeNames[type]}] ${name}</span><span class="del-btn" onclick="deleteContact('${type}', ${i})">✕</span></div>`;
         });
     });
 }
@@ -258,7 +266,7 @@ ${document.getElementById('dutyName').value}
     const r = document.getElementById('result');
     r.innerText = content;
     r.style.display = 'block';
-    navigator.clipboard.writeText(content).then(() => alert('內容已生成並成功複製！'));
+    navigator.clipboard.writeText(content).then(() => alert('已複製！'));
 }
 
 initApp();
