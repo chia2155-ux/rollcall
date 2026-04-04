@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>緊急回報系統 v4.2 (自動電話格式)</title>
+    <title>緊急回報系統 v4.3 (精確電話格式)</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 15px; background-color: #f0f2f5; line-height: 1.5; }
         .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -23,7 +23,7 @@
 <body>
 
 <div class="container">
-    <h2>🚑 聯絡表產生器 v4.2</h2>
+    <h2>🚑 聯絡表產生器 v4.3</h2>
 
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理名單</button>
 
@@ -37,7 +37,7 @@
         <input type="text" id="newUnit" placeholder="單位 (例: 防空營)">
         <input type="text" id="newRank" placeholder="階級 (例: 上士)">
         <input type="text" id="newName" placeholder="姓名">
-        <input type="tel" id="newPhone" placeholder="手機 (自動補橫線)" oninput="formatPhone(this)" maxlength="11">
+        <input type="tel" id="newPhone" placeholder="手機 (格式: 0912-123456)" oninput="formatPhone(this)" maxlength="11">
         <input type="text" id="newMil" placeholder="軍線 (僅戰情官填寫)">
         <button onclick="addNewContact()" style="background:#27ae60; padding: 10px; font-size: 16px;">確認新增</button>
         <hr>
@@ -123,29 +123,28 @@ const defaultData = {
     ]
 };
 
-let db = JSON.parse(localStorage.getItem('ems_contacts_v42'));
+let db = JSON.parse(localStorage.getItem('ems_contacts_v43'));
 if (!db) {
     db = JSON.parse(JSON.stringify(defaultData));
-    localStorage.setItem('ems_contacts_v42', JSON.stringify(db));
+    localStorage.setItem('ems_contacts_v43', JSON.stringify(db));
 }
 
+// 修改後的精確格式化函數
 function formatPhone(el) {
     let val = el.value.replace(/\D/g, ''); // 只保留數字
-    if (val.length > 3 && val.length <= 6) {
-        val = val.slice(0, 3) + '-' + val.slice(3);
-    } else if (val.length > 6) {
-        val = val.slice(0, 3) + '-' + val.slice(3, 6) + '-' + val.slice(6, 10);
+    if (val.length > 4) {
+        val = val.slice(0, 4) + '-' + val.slice(4, 10);
     }
     el.value = val;
 }
 
 function saveDB() {
-    localStorage.setItem('ems_contacts_v42', JSON.stringify(db));
+    localStorage.setItem('ems_contacts_v43', JSON.stringify(db));
     initApp();
 }
 
 function resetToDefault() {
-    if(confirm('重設將會清空您手動新增的名單。確定嗎？')) {
+    if(confirm('這將恢復預設名單。確定嗎？')) {
         db = JSON.parse(JSON.stringify(defaultData));
         saveDB();
     }
