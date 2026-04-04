@@ -3,107 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>緊急傷病聯絡表產生器</title>
+    <title>緊急傷病聯絡表產生器 v2</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; line-height: 1.6; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #2c3e50; }
-        .section { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
-        .section-title { font-weight: bold; color: #e67e22; margin-bottom: 10px; display: block; }
-        label { display: block; margin: 5px 0; font-size: 0.9em; color: #666; }
-        input, select { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background-color: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        button:hover { background-color: #219150; }
-        #result { white-space: pre-wrap; background: #f9f9f9; padding: 15px; border: 1px dashed #ccc; margin-top: 20px; font-size: 14px; display: none; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 15px; background-color: #f0f2f5; color: #1c1e21; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #1a73e8; margin-bottom: 20px; }
+        .section { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #1a73e8; }
+        .section-title { font-weight: bold; color: #000; margin-bottom: 10px; display: block; font-size: 1.1em; }
+        label { display: block; margin: 8px 0 4px; font-size: 0.85em; color: #5f6368; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #dadce0; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 15px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; margin-top: 10px; }
+        button:active { background-color: #174ea6; transform: scale(0.98); }
+        #result { white-space: pre-wrap; background: #fffbe6; padding: 15px; border: 1px solid #ffe58f; margin-top: 20px; font-size: 14px; display: none; border-radius: 8px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🚑 聯絡表自動產生器</h2>
+    <h2>🚑 聯絡表產生器 v2</h2>
     
     <div class="section">
-        <label>報告日期</label>
-        <input type="text" id="reportDate" placeholder="例如：4月6日">
+        <label>📅 報告日期</label>
+        <input type="text" id="reportDate">
     </div>
 
-    <div class="section">
+    <div class="section" style="border-left-color: #e67e22;">
         <span class="section-title">📍 坪頂營區</span>
         <label>救護車車號</label>
         <input type="text" id="car1" value="軍H-20378">
         
         <label>車長</label>
         <select id="leader1" onchange="updatePhone('leader1', 'leader1Phone')"></select>
-        <input type="text" id="leader1Phone" placeholder="電話自動帶入">
+        <input type="text" id="leader1Phone" readonly style="background:#eee">
         
         <label>駕駛</label>
         <select id="driver1" onchange="updatePhone('driver1', 'driver1Phone')"></select>
-        <input type="text" id="driver1Phone" placeholder="電話自動帶入">
+        <input type="text" id="driver1Phone" readonly style="background:#eee">
     </div>
 
-    <div class="section">
+    <div class="section" style="border-left-color: #9b59b6;">
         <span class="section-title">📍 嵩山營區</span>
         <label>救護車車號</label>
         <input type="text" id="car2" value="軍H-60142">
         
         <label>車長</label>
         <select id="leader2" onchange="updatePhone('leader2', 'leader2Phone')"></select>
-        <input type="text" id="leader2Phone" placeholder="電話自動帶入">
+        <input type="text" id="leader2Phone" readonly style="background:#eee">
         
         <label>駕駛</label>
         <select id="driver2" onchange="updatePhone('driver2', 'driver2Phone')"></select>
-        <input type="text" id="driver2Phone" placeholder="電話自動帶入">
+        <input type="text" id="driver2Phone" readonly style="background:#eee">
     </div>
 
-    <div class="section">
-        <span class="section-title">☎️ 戰情官資訊</span>
+    <div class="section" style="border-left-color: #27ae60;">
+        <span class="section-title">☎️ 戰情官 (坪頂)</span>
+        <label>選擇人員</label>
+        <select id="dutyOfficerSelect" onchange="updateDuty()"></select>
         <label>職稱姓名</label>
-        <input type="text" id="dutyOfficer" value="通信官中尉王蔚">
+        <input type="text" id="dutyName">
         <label>民線</label>
         <input type="text" id="civLine" value="07-8913762">
         <label>軍線</label>
         <input type="text" id="milLine" value="712318">
     </div>
 
-    <button onclick="generateAndCopy()">生成內容並複製</button>
+    <button onclick="generateAndCopy()">生成並一鍵複製</button>
     <div id="result"></div>
 </div>
 
 <script>
-// --- 通訊錄資料區 (請根據實際需求修改這裡的內容) ---
-const contacts = [
-    { unit: "防空營", rank: "上士", name: "蔡淑賢", phone: "0954-139130" },
-    { unit: "防空營", rank: "中士", name: "王建蒝", phone: "0988-610231" },
-    { unit: "防空營", rank: "下士", name: "謝佳霖", phone: "0980-516200" },
-    { unit: "防空營", rank: "一兵", name: "張秦一哥", phone: "0928-101087" },
-    { unit: "防空營", rank: "上士", name: "謝倉玄", phone: "0917-186363" },
-    
-
-    { unit: "防空暨飛彈指揮部", rank: "上尉", name: "田家增", phone: "0909-500707" },
-    { unit: "防空暨飛彈指揮部", rank: "下士", name: "周哲宇", phone: "0938-013937" },
-    // 你可以在下面繼續增加人名...
+// --- 分開的通訊錄資料 ---
+const contacts_PingDing = [
+    { rank: "上士", name: "謝倉玄", phone: "0917-186363", unit: "防空營" },
+    { rank: "下士", name: "謝佳霖", phone: "0980-516200", unit: "防空營" },
 ];
 
-// 初始化日期
-document.getElementById('reportDate').value = (new Date().getMonth() + 1) + "月" + new Date().getDate() + "日";
+const contacts_SongShan = [
+    { rank: "上尉", name: "田家增", phone: "0909-500707", unit: "防空暨飛彈指揮部" },
+    { rank: "下士", name: "周哲宇", phone: "0938-013937", unit: "防空暨飛彈指揮部" },
+];
 
-// 填充下拉選單
-const selects = ['leader1', 'driver1', 'leader2', 'driver2'];
-selects.forEach(id => {
+const contacts_Duty = [
+    { title: "通信官中尉", name: "王蔚", civ: "07-8913762", mil: "712318" },
+    { title: "值星官少尉", name: "陳小明", civ: "07-1234567", mil: "123456" }, // 範例
+];
+
+// 初始化
+window.onload = function() {
+    document.getElementById('reportDate').value = (new Date().getMonth() + 1) + "月" + new Date().getDate() + "日";
+    
+    fillSelect('leader1', contacts_PingDing);
+    fillSelect('driver1', contacts_PingDing);
+    fillSelect('leader2', contacts_SongShan);
+    fillSelect('driver2', contacts_SongShan);
+    
+    // 填寫戰情官下拉選單
+    const dutySel = document.getElementById('dutyOfficerSelect');
+    dutySel.innerHTML = '<option value="">-- 請選擇戰情人員 --</option>';
+    contacts_Duty.forEach((p, index) => {
+        dutySel.innerHTML += `<option value="${index}">${p.title}${p.name}</option>`;
+    });
+};
+
+function fillSelect(id, list) {
     const el = document.getElementById(id);
     el.innerHTML = '<option value="">-- 請選擇 --</option>';
-    contacts.forEach(person => {
-        const optionText = `${person.unit}${person.rank}${person.name}`;
-        el.innerHTML += `<option value="${optionText}" data-phone="${person.phone}">${optionText}</option>`;
+    list.forEach(p => {
+        const displayText = `${p.unit}${p.rank}${p.name}`;
+        el.innerHTML += `<option value="${displayText}" data-phone="${p.phone}">${displayText}</option>`;
     });
-});
+}
 
-// 自動帶入電話
-function updatePhone(selectId, phoneInputId) {
-    const select = document.getElementById(selectId);
-    const phoneInput = document.getElementById(phoneInputId);
-    const selectedOption = select.options[select.selectedIndex];
-    phoneInput.value = selectedOption.getAttribute('data-phone') || "";
+function updatePhone(selectId, phoneId) {
+    const sel = document.getElementById(selectId);
+    const phone = document.getElementById(phoneId);
+    phone.value = sel.options[sel.selectedIndex].getAttribute('data-phone') || "";
+}
+
+function updateDuty() {
+    const idx = document.getElementById('dutyOfficerSelect').value;
+    if(idx !== "") {
+        const p = contacts_Duty[idx];
+        document.getElementById('dutyName').value = p.title + p.name;
+        document.getElementById('civLine').value = p.civ;
+        document.getElementById('milLine').value = p.mil;
+    }
 }
 
 function generateAndCopy() {
@@ -137,23 +161,20 @@ ${document.getElementById('driver2Phone').value}
 
 ☎️戰情官☎️
 坪頂營區
-${document.getElementById('dutyOfficer').value}
+${document.getElementById('dutyName').value}
 民線：${document.getElementById('civLine').value}
 軍線：${document.getElementById('milLine').value}`;
 
-    // 顯示結果
     const resultDiv = document.getElementById('result');
     resultDiv.innerText = content;
     resultDiv.style.display = 'block';
 
-    // 複製到剪貼簿
     navigator.clipboard.writeText(content).then(() => {
-        alert('內容已生成並成功複製到剪貼簿！');
-    }).catch(err => {
-        alert('複製失敗，請手動全選複製。');
+        alert('複製成功！');
+    }).catch(() => {
+        alert('請手動全選複製');
     });
 }
 </script>
-
 </body>
 </html>
