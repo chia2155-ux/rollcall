@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>緊急回報系統 v4.3 (精確電話格式)</title>
+    <title>緊急回報系統 v4.4 (分組管理版)</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 15px; background-color: #f0f2f5; line-height: 1.5; }
         .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -15,35 +15,55 @@
         button { width: 100%; padding: 15px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; margin-top: 10px; }
         .btn-admin { background-color: #5f6368; font-size: 14px; padding: 8px; margin-bottom: 15px; width: auto; display: block; margin-left: auto; }
         .admin-panel { display: none; background: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #1a73e8; }
-        .contact-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin-top: 5px; border-radius: 4px; font-size: 14px; border: 1px solid #eee; }
+        
+        /* 收合選單樣式 */
+        .collapse-btn { width: 100%; text-align: left; background: #fff; color: #333; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; }
+        .collapse-content { display: none; padding: 5px 0; }
+        .contact-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin-top: 3px; border-radius: 4px; font-size: 13px; border: 1px solid #eee; }
         .del-btn { color: #d93025; cursor: pointer; font-weight: bold; padding: 2px 8px; }
         #result { white-space: pre-wrap; background: #fffbe6; padding: 15px; border: 1px solid #ffe58f; margin-top: 20px; font-size: 14px; display: none; border-radius: 8px; color: #333; }
+        .readonly-input { background-color: #e9ecef; color: #495057; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🚑 聯絡表產生器 v4.3</h2>
+    <h2>🚑 聯絡表產生器 v4.4</h2>
 
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理名單</button>
 
     <div id="adminPanel" class="admin-panel">
         <span class="section-title">✨ 新增自定義人員</span>
-        <select id="newType">
+        <select id="newType" onchange="checkDutyType()">
             <option value="PingDing">坪頂營區</option>
             <option value="SongShan">嵩山營區</option>
             <option value="Duty">戰情官</option>
         </select>
-        <input type="text" id="newUnit" placeholder="單位 (例: 防空營)">
-        <input type="text" id="newRank" placeholder="階級 (例: 上士)">
+        <div id="normalFields">
+            <input type="text" id="newUnit" placeholder="單位 (例: 防空營)">
+            <input type="text" id="newRank" placeholder="階級 (例: 上士)">
+        </div>
+        <div id="dutyFields" style="display:none;">
+            <input type="text" id="newTitle" placeholder="職稱 (例: 通信官中尉)">
+        </div>
         <input type="text" id="newName" placeholder="姓名">
         <input type="tel" id="newPhone" placeholder="手機 (格式: 0912-123456)" oninput="formatPhone(this)" maxlength="11">
-        <input type="text" id="newMil" placeholder="軍線 (僅戰情官填寫)">
+        
         <button onclick="addNewContact()" style="background:#27ae60; padding: 10px; font-size: 16px;">確認新增</button>
         <hr>
-        <span class="section-title">目前人員清單 (點擊可刪除)</span>
-        <div id="contactList"></div>
-        <button onclick="resetToDefault()" style="background:#d93025; font-size:12px; padding:5px; margin-top:10px;">⚠️ 重設回預設名單</button>
+        
+        <span class="section-title">目前人員清單</span>
+        
+        <div class="collapse-btn" onclick="toggleCollapse('listPingDing')">📍 坪頂人員 <span id="listPingDingIcon">▼</span></div>
+        <div id="listPingDing" class="collapse-content"></div>
+
+        <div class="collapse-btn" onclick="toggleCollapse('listSongShan')">📍 嵩山人員 <span id="listSongShanIcon">▼</span></div>
+        <div id="listSongShan" class="collapse-content"></div>
+
+        <div class="collapse-btn" onclick="toggleCollapse('listDuty')">☎️ 戰情官名單 <span id="listDutyIcon">▼</span></div>
+        <div id="listDuty" class="collapse-content"></div>
+
+        <button onclick="resetToDefault()" style="background:#d93025; font-size:12px; padding:5px; margin-top:15px;">⚠️ 重設回預設名單</button>
     </div>
     
     <div class="section">
@@ -57,10 +77,10 @@
         <input type="text" id="car1" value="軍H-20378">
         <label>車長</label>
         <select id="leader1" onchange="updatePhone('leader1', 'leader1Phone')"></select>
-        <input type="text" id="leader1Phone" readonly style="background:#eee">
+        <input type="text" id="leader1Phone" readonly class="readonly-input">
         <label>駕駛</label>
         <select id="driver1" onchange="updatePhone('driver1', 'driver1Phone')"></select>
-        <input type="text" id="driver1Phone" readonly style="background:#eee">
+        <input type="text" id="driver1Phone" readonly class="readonly-input">
     </div>
 
     <div class="section" style="border-left-color: #9b59b6;">
@@ -69,10 +89,10 @@
         <input type="text" id="car2" value="軍H-60142">
         <label>車長</label>
         <select id="leader2" onchange="updatePhone('leader2', 'leader2Phone')"></select>
-        <input type="text" id="leader2Phone" readonly style="background:#eee">
+        <input type="text" id="leader2Phone" readonly class="readonly-input">
         <label>駕駛</label>
         <select id="driver2" onchange="updatePhone('driver2', 'driver2Phone')"></select>
-        <input type="text" id="driver2Phone" readonly style="background:#eee">
+        <input type="text" id="driver2Phone" readonly class="readonly-input">
     </div>
 
     <div class="section" style="border-left-color: #27ae60;">
@@ -80,10 +100,10 @@
         <label>選擇人員</label>
         <select id="dutyOfficerSelect" onchange="updateDuty()"></select>
         <input type="hidden" id="dutyName">
-        <label>民線</label>
-        <input type="text" id="civLine" value="07-8913762">
-        <label>軍線</label>
-        <input type="text" id="milLine" value="712318">
+        <label>民線 (固定)</label>
+        <input type="text" id="civLine" value="07-8913762" readonly class="readonly-input">
+        <label>軍線 (固定)</label>
+        <input type="text" id="milLine" value="712318" readonly class="readonly-input">
     </div>
 
     <button onclick="generateAndCopy()">生成並一鍵複製</button>
@@ -123,23 +143,40 @@ const defaultData = {
     ]
 };
 
-let db = JSON.parse(localStorage.getItem('ems_contacts_v43'));
+let db = JSON.parse(localStorage.getItem('ems_contacts_v44'));
 if (!db) {
     db = JSON.parse(JSON.stringify(defaultData));
-    localStorage.setItem('ems_contacts_v43', JSON.stringify(db));
+    localStorage.setItem('ems_contacts_v44', JSON.stringify(db));
 }
 
-// 修改後的精確格式化函數
 function formatPhone(el) {
-    let val = el.value.replace(/\D/g, ''); // 只保留數字
+    let val = el.value.replace(/\D/g, ''); 
     if (val.length > 4) {
         val = val.slice(0, 4) + '-' + val.slice(4, 10);
     }
     el.value = val;
 }
 
+function checkDutyType() {
+    const type = document.getElementById('newType').value;
+    document.getElementById('normalFields').style.display = (type === 'Duty') ? 'none' : 'block';
+    document.getElementById('dutyFields').style.display = (type === 'Duty') ? 'block' : 'none';
+}
+
+function toggleCollapse(id) {
+    const content = document.getElementById(id);
+    const icon = document.getElementById(id + 'Icon');
+    if (content.style.display === 'block') {
+        content.style.display = 'none';
+        icon.innerText = '▼';
+    } else {
+        content.style.display = 'block';
+        icon.innerText = '▲';
+    }
+}
+
 function saveDB() {
-    localStorage.setItem('ems_contacts_v43', JSON.stringify(db));
+    localStorage.setItem('ems_contacts_v44', JSON.stringify(db));
     initApp();
 }
 
@@ -158,21 +195,21 @@ function toggleAdmin() {
 
 function addNewContact() {
     const type = document.getElementById('newType').value;
-    const unit = document.getElementById('newUnit').value;
-    const rank = document.getElementById('newRank').value;
     const name = document.getElementById('newName').value;
     const phone = document.getElementById('newPhone').value;
-    const mil = document.getElementById('newMil').value;
 
     if(!name || !phone) return alert('姓名與電話為必填！');
 
     if(type === 'Duty') {
-        db.Duty.push({ title: unit + rank, name: name, civ: phone, mil: mil || "無" });
+        const title = document.getElementById('newTitle').value;
+        db.Duty.push({ title: title, name: name, civ: "07-8913762", mil: "712318" });
     } else {
+        const unit = document.getElementById('newUnit').value;
+        const rank = document.getElementById('newRank').value;
         db[type].push({ unit, rank, name, phone });
     }
     saveDB();
-    ['newUnit','newRank','newName','newPhone','newMil'].forEach(id=>document.getElementById(id).value='');
+    ['newUnit','newRank','newTitle','newName','newPhone'].forEach(id=>document.getElementById(id).value='');
 }
 
 function deleteContact(type, index) {
@@ -183,15 +220,17 @@ function deleteContact(type, index) {
 }
 
 function renderAdminList() {
-    const listDiv = document.getElementById('contactList');
-    listDiv.innerHTML = '';
-    const typeNames = { PingDing: "坪頂", SongShan: "嵩山", Duty: "戰情" };
-    ['PingDing', 'SongShan', 'Duty'].forEach(type => {
+    const render = (type, targetId) => {
+        const div = document.getElementById(targetId);
+        div.innerHTML = '';
         db[type].forEach((p, i) => {
-            const name = type === 'Duty' ? p.title + p.name : p.unit + p.rank + p.name;
-            listDiv.innerHTML += `<div class="contact-item"><span>[${typeNames[type]}] ${name}</span><span class="del-btn" onclick="deleteContact('${type}', ${i})">✕</span></div>`;
+            const displayName = (type === 'Duty') ? p.title + p.name : p.unit + p.rank + p.name;
+            div.innerHTML += `<div class="contact-item"><span>${displayName}</span><span class="del-btn" onclick="deleteContact('${type}', ${i})">✕</span></div>`;
         });
-    });
+    };
+    render('PingDing', 'listPingDing');
+    render('SongShan', 'listSongShan');
+    render('Duty', 'listDuty');
 }
 
 function initApp() {
@@ -230,8 +269,6 @@ function updateDuty() {
     if(idx !== "") {
         const p = db.Duty[idx];
         document.getElementById('dutyName').value = p.title + p.name;
-        document.getElementById('civLine').value = p.civ;
-        document.getElementById('milLine').value = p.mil;
     }
 }
 
