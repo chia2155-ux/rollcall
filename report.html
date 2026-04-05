@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>緊急回報系統 v4.4 (分組管理版)</title>
+    <title>緊急回報系統 v4.5 (備份同步版)</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 15px; background-color: #f0f2f5; line-height: 1.5; }
         .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -11,26 +11,25 @@
         .section { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #1a73e8; }
         .section-title { font-weight: bold; margin-bottom: 10px; display: block; font-size: 1.1em; }
         label { display: block; margin: 8px 0 4px; font-size: 0.85em; color: #5f6368; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #dadce0; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #dadce0; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 15px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; margin-top: 10px; }
         .btn-admin { background-color: #5f6368; font-size: 14px; padding: 8px; margin-bottom: 15px; width: auto; display: block; margin-left: auto; }
         .admin-panel { display: none; background: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #1a73e8; }
-        
-        /* 收合選單樣式 */
         .collapse-btn { width: 100%; text-align: left; background: #fff; color: #333; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; }
         .collapse-content { display: none; padding: 5px 0; }
         .contact-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin-top: 3px; border-radius: 4px; font-size: 13px; border: 1px solid #eee; }
         .del-btn { color: #d93025; cursor: pointer; font-weight: bold; padding: 2px 8px; }
+        .sync-box { background: #fff; padding: 10px; border-radius: 8px; margin-top: 15px; border: 1px solid #ccc; }
         #result { white-space: pre-wrap; background: #fffbe6; padding: 15px; border: 1px solid #ffe58f; margin-top: 20px; font-size: 14px; display: none; border-radius: 8px; color: #333; }
-        .readonly-input { background-color: #e9ecef; color: #495057; cursor: not-allowed; }
+        .readonly-input { background-color: #e9ecef; color: #495057; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🚑 聯絡表產生器 v4.4</h2>
+    <h2>🚑 聯絡表產生器 v4.5</h2>
 
-    <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理名單</button>
+    <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理 / 同步名單</button>
 
     <div id="adminPanel" class="admin-panel">
         <span class="section-title">✨ 新增自定義人員</span>
@@ -48,18 +47,23 @@
         </div>
         <input type="text" id="newName" placeholder="姓名">
         <input type="tel" id="newPhone" placeholder="手機 (格式: 0912-123456)" oninput="formatPhone(this)" maxlength="11">
-        
         <button onclick="addNewContact()" style="background:#27ae60; padding: 10px; font-size: 16px;">確認新增</button>
+        
         <hr>
         
+        <span class="section-title">📲 同步與備份 (傳給別人)</span>
+        <div class="sync-box">
+            <button onclick="exportData()" style="background:#6c757d; font-size:14px; padding:8px;">1. 複製我的名單 (匯出)</button>
+            <textarea id="syncData" placeholder="在此貼上別人的名單代碼..." style="margin-top:10px; font-size:12px; height:60px;"></textarea>
+            <button onclick="importData()" style="background:#17a2b8; font-size:14px; padding:8px;">2. 貼上並匯入名單</button>
+        </div>
+
+        <hr>
         <span class="section-title">目前人員清單</span>
-        
         <div class="collapse-btn" onclick="toggleCollapse('listPingDing')">📍 坪頂人員 <span id="listPingDingIcon">▼</span></div>
         <div id="listPingDing" class="collapse-content"></div>
-
         <div class="collapse-btn" onclick="toggleCollapse('listSongShan')">📍 嵩山人員 <span id="listSongShanIcon">▼</span></div>
         <div id="listSongShan" class="collapse-content"></div>
-
         <div class="collapse-btn" onclick="toggleCollapse('listDuty')">☎️ 戰情官名單 <span id="listDutyIcon">▼</span></div>
         <div id="listDuty" class="collapse-content"></div>
 
@@ -73,8 +77,6 @@
 
     <div class="section" style="border-left-color: #e67e22;">
         <span class="section-title">📍 坪頂營區</span>
-        <label>救護車車號</label>
-        <input type="text" id="car1" value="軍H-20378">
         <label>車長</label>
         <select id="leader1" onchange="updatePhone('leader1', 'leader1Phone')"></select>
         <input type="text" id="leader1Phone" readonly class="readonly-input">
@@ -85,8 +87,6 @@
 
     <div class="section" style="border-left-color: #9b59b6;">
         <span class="section-title">📍 嵩山營區</span>
-        <label>救護車車號</label>
-        <input type="text" id="car2" value="軍H-60142">
         <label>車長</label>
         <select id="leader2" onchange="updatePhone('leader2', 'leader2Phone')"></select>
         <input type="text" id="leader2Phone" readonly class="readonly-input">
@@ -117,43 +117,40 @@ const defaultData = {
         { unit: "防空營", rank: "中士", name: "王建蒝", phone: "0988-610231" },
         { unit: "防空營", rank: "下士", name: "謝佳霖", phone: "0980-516200" },
         { unit: "防空營", rank: "一兵", name: "張秦一哥", phone: "0928-101087" },
-        { unit: "防空營", rank: "上士", name: "謝倉玄", phone: "0917-186363" },
-        { unit: "防空營", rank: "上士", name: "陳雍文", phone: "0975-268823" },
-        { unit: "防空營", rank: "上士", name: "蘇精翰", phone: "0977-278668" }
+        { unit: "防空營", rank: "上士", name: "謝倉玄", phone: "0917-186363" }
     ],
     SongShan: [
         { unit: "防空暨飛彈指揮部", rank: "少校", name: "林政融", phone: "0978-125970" },
-        { unit: "防空暨飛彈指揮部", rank: "少校", name: "鄭光惠", phone: "0970-595206" },
-        { unit: "防空暨飛彈指揮部", rank: "上尉", name: "黃則誠", phone: "0980-634376" },
-        { unit: "防空暨飛彈指揮部", rank: "上尉", name: "田家增", phone: "0909-500707" },
-        { unit: "防空暨飛彈指揮部", rank: "上士", name: "楊立楷", phone: "0922-077946" },
-        { unit: "防空暨飛彈指揮部", rank: "上士", name: "許詠傑", phone: "0972-313053" },
-        { unit: "防空暨飛彈指揮部", rank: "上士", name: "李美宣", phone: "0921-256643" },
-        { unit: "防空暨飛彈指揮部", rank: "下士", name: "陳佩歆", phone: "0981-213859" },
-        { unit: "防空暨飛彈指揮部", rank: "下士", name: "周哲宇", phone: "0938-013937" },
-        { unit: "防空暨飛彈指揮部", rank: "下士", name: "張宇婷", phone: "0930-526663" },
-        { unit: "防空暨飛彈指揮部", rank: "下士", name: "盧傳承", phone: "0916-008996" }
+        { unit: "防空暨飛彈指揮部", rank: "上尉", name: "田家增", phone: "0909-500707" }
     ],
     Duty: [
-        { title: "通信官中尉", name: "王蔚", civ: "07-8913762", mil: "712318" },
-        { title: "情報官中尉", name: "陳家俊", civ: "07-8913762", mil: "712318" },
-        { title: "飛技官中尉", name: "洪星瑋", civ: "07-8913762", mil: "712318" },
-        { title: "作訓官中尉", name: "張晉愷", civ: "07-8913762", mil: "712318" },
-        { title: "後勤官中尉", name: "鄭家澄", civ: "07-8913762", mil: "712318" }
+        { title: "通信官中尉", name: "王蔚", civ: "07-8913762", mil: "712318" }
     ]
 };
 
-let db = JSON.parse(localStorage.getItem('ems_contacts_v44'));
-if (!db) {
-    db = JSON.parse(JSON.stringify(defaultData));
-    localStorage.setItem('ems_contacts_v44', JSON.stringify(db));
+let db = JSON.parse(localStorage.getItem('ems_contacts_v45')) || JSON.parse(JSON.stringify(defaultData));
+
+function exportData() {
+    const dataStr = btoa(unescape(encodeURIComponent(JSON.stringify(db))));
+    navigator.clipboard.writeText(dataStr).then(() => alert('已複製同步代碼！請傳給他人貼上。'));
+}
+
+function importData() {
+    const input = document.getElementById('syncData').value.trim();
+    if(!input) return alert('請先貼上代碼');
+    try {
+        const decoded = JSON.parse(decodeURIComponent(escape(atob(input))));
+        if(confirm('匯入將覆蓋目前手機裡的所有名單，確定嗎？')) {
+            db = decoded;
+            saveDB();
+            alert('匯入成功！');
+        }
+    } catch(e) { alert('代碼格式錯誤，請確認是否複製完整。'); }
 }
 
 function formatPhone(el) {
     let val = el.value.replace(/\D/g, ''); 
-    if (val.length > 4) {
-        val = val.slice(0, 4) + '-' + val.slice(4, 10);
-    }
+    if (val.length > 4) val = val.slice(0, 4) + '-' + val.slice(4, 10);
     el.value = val;
 }
 
@@ -166,22 +163,17 @@ function checkDutyType() {
 function toggleCollapse(id) {
     const content = document.getElementById(id);
     const icon = document.getElementById(id + 'Icon');
-    if (content.style.display === 'block') {
-        content.style.display = 'none';
-        icon.innerText = '▼';
-    } else {
-        content.style.display = 'block';
-        icon.innerText = '▲';
-    }
+    content.style.display = content.style.display === 'block' ? 'none' : 'block';
+    icon.innerText = content.style.display === 'block' ? '▲' : '▼';
 }
 
 function saveDB() {
-    localStorage.setItem('ems_contacts_v44', JSON.stringify(db));
+    localStorage.setItem('ems_contacts_v45', JSON.stringify(db));
     initApp();
 }
 
 function resetToDefault() {
-    if(confirm('這將恢復預設名單。確定嗎？')) {
+    if(confirm('重設將清空自定義名單。確定嗎？')) {
         db = JSON.parse(JSON.stringify(defaultData));
         saveDB();
     }
@@ -197,7 +189,6 @@ function addNewContact() {
     const type = document.getElementById('newType').value;
     const name = document.getElementById('newName').value;
     const phone = document.getElementById('newPhone').value;
-
     if(!name || !phone) return alert('姓名與電話為必填！');
 
     if(type === 'Duty') {
