@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仁美版緊急聯絡表產生器</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; padding: 20px; background: #f4f4f9; color: #333; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; font-size: 1.5rem; }
+        .section { border: 1px solid #eee; padding: 15px; margin-bottom: 20px; border-radius: 8px; background: #fafafa; }
+        .section-title { font-weight: bold; margin-bottom: 10px; color: #d32f2f; display: flex; align-items: center; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        label { font-size: 0.85rem; color: #666; }
+        .full-width { grid-column: span 2; }
+        button { width: 100%; padding: 12px; background: #2c3e50; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; margin-top: 10px; }
+        button:hover { background: #1a252f; }
+        #output, #dataString { width: 100%; height: 200px; margin-top: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; white-space: pre-wrap; font-family: monospace; background: #f9f9f9; }
+        .copy-btn { background: #27ae60; }
+        .import-section { background: #e8f4fd; border-color: #b3d7ff; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🚑 仁美版緊急聯絡表產生器</h1>
+
+    <div class="section import-section">
+        <div class="section-title">📥 資料匯入/導出窗格</div>
+        <label>將代碼貼於此處點擊匯入，或複製此處代碼傳給別人</label>
+        <input type="text" id="dataInput" placeholder="在此貼上別人傳給你的代碼...">
+        <div class="grid">
+            <button onclick="importData()">匯入資料</button>
+            <button onclick="exportData()" class="copy-btn">產生代碼並複製</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📅 基礎資訊</div>
+        <label>日期</label>
+        <input type="text" id="date" placeholder="例如：4月2日">
+    </div>
+
+    <div class="section">
+        <div class="section-title">🏠 仁美營區 (救護車)</div>
+        <label>車號</label><input type="text" id="rm_car" value="軍H-20662">
+        <p><strong>16前</strong></p>
+        <div class="grid">
+            <div><label>車長</label><input type="text" id="rm_16f_l"></div>
+            <div><label>電話</label><input type="text" id="rm_16f_lt"></div>
+            <div><label>駕駛</label><input type="text" id="rm_16f_d"></div>
+            <div><label>電話</label><input type="text" id="rm_16f_dt"></div>
+        </div>
+        <p><strong>16後</strong></p>
+        <div class="grid">
+            <div><label>車長</label><input type="text" id="rm_16a_l"></div>
+            <div><label>電話</label><input type="text" id="rm_16a_lt"></div>
+            <div><label>駕駛</label><input type="text" id="rm_16a_d"></div>
+            <div><label>電話</label><input type="text" id="rm_16a_dt"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">🏠 考潭營區</div>
+        <label>車號</label><input type="text" id="kt_car" value="軍H-20665">
+        <div class="grid">
+            <div><label>車長</label><input type="text" id="kt_l"></div>
+            <div><label>電話</label><input type="text" id="kt_lt"></div>
+            <div><label>駕駛</label><input type="text" id="kt_d"></div>
+            <div><label>電話</label><input type="text" id="kt_dt"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">☎️ 重要值勤官</div>
+        <label>總值星官 12前</label>
+        <div class="grid">
+            <input type="text" id="duty_12f" placeholder="職級姓名">
+            <input type="text" id="duty_12f_t" placeholder="電話">
+        </div>
+        <label>總值星官 12後</label>
+        <div class="grid">
+            <input type="text" id="duty_12a" placeholder="職級姓名">
+            <input type="text" id="duty_12a_t" placeholder="電話">
+        </div>
+        <hr>
+        <label>高勤官 18前</label>
+        <div class="grid">
+            <input type="text" id="high_18f" placeholder="職級姓名">
+            <input type="text" id="high_18f_t" placeholder="電話">
+        </div>
+        <label>高勤官 18後</label>
+        <div class="grid">
+            <input type="text" id="high_18a" placeholder="職級姓名">
+            <input type="text" id="high_18a_t" placeholder="電話">
+        </div>
+    </div>
+
+    <button onclick="generateText()">✨ 產生文字格式</button>
+    
+    <div id="output" id="finalResult"></div>
+    <button class="copy-btn" onclick="copyResult()">📋 複製最終成果</button>
+</div>
+
+<script>
+    function generateText() {
+        const d = (id) => document.getElementById(id).value;
+        let res = `${d('date')}砲指部緊急傷病聯絡表：\n\n`;
+        
+        res += `仁美營區\n🚑救護車🚑\n16前\n車號：${d('rm_car')}\n車長：${d('rm_16f_l')}\n${d('rm_16f_lt')}\n駕駛：${d('rm_16f_d')}\n${d('rm_16f_dt')}\n\n`;
+        res += `16後\n車號：${d('rm_car')}\n車長：${d('rm_16a_l')}\n${d('rm_16a_lt')}\n駕駛：${d('rm_16a_d')}\n${d('rm_16a_dt')}\n\n`;
+        res += `區域醫院：國軍高雄總醫院🏥\n後送路程：約15-20分鐘\n聯絡電話：07-7496591轉7496751\n\n`;
+        
+        res += `考潭營區\n🚑救護車🚑\n車號：${d('kt_car')}\n車長：${d('kt_l')}\n${d('kt_lt')}\n駕駛：${d('kt_d')}\n${d('kt_dt')}\n\n`;
+        res += `區域醫院：高雄長庚醫院🏥\n後送路程：約5-10分鐘\n聯絡電話：07-7317123轉2117(內科)、3377(外科)\n\n`;
+        
+        res += `☎️總值星官☎️\n12前\n${d('duty_12f')}\n電話：${d('duty_12f_t')}\n\n`;
+        res += `12後\n${d('duty_12a')}\n電話：${d('duty_12a_t')}\n\n`;
+        
+        res += `☎️高勤官☎️\n18前\n${d('high_18f')}\n電話：${d('high_18f_t')}\n\n`;
+        res += `18後\n${d('high_18a')}\n電話：${d('high_18a_t')}`;
+
+        document.getElementById('output').innerText = res;
+    }
+
+    function exportData() {
+        const inputs = document.querySelectorAll('input');
+        let data = {};
+        inputs.forEach(input => { if(input.id !== 'dataInput') data[input.id] = input.value; });
+        const str = btoa(encodeURIComponent(JSON.stringify(data)));
+        document.getElementById('dataInput').value = str;
+        navigator.clipboard.writeText(str);
+        alert('代碼已產生並複製！傳給別人貼上即可匯入人名。');
+    }
+
+    function importData() {
+        try {
+            const str = document.getElementById('dataInput').value;
+            const data = JSON.parse(decodeURIComponent(atob(str)));
+            for (let key in data) {
+                if (document.getElementById(key)) document.getElementById(key).value = data[key];
+            }
+            alert('人名資料匯入成功！');
+        } catch (e) {
+            alert('代碼格式錯誤，請重新複製。');
+        }
+    }
+
+    function copyResult() {
+        const text = document.getElementById('output').innerText;
+        navigator.clipboard.writeText(text);
+        alert('表格已複製到剪貼簿！');
+    }
+</script>
+
+</body>
+</html>
