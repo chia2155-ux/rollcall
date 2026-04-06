@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>緊急回報系統 v5.8 (戰情全自定義版)</title>
+    <title>緊急回報系統 v5.9 (多時段中文化版)</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 10px; background-color: #f0f2f5; line-height: 1.4; }
         .container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -22,36 +22,32 @@
         .contact-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin-top: 3px; border-radius: 4px; font-size: 13px; border: 1px solid #eee; }
         .del-btn { color: #d93025; cursor: pointer; font-weight: bold; padding: 2px 8px; }
         .readonly-input { background-color: #e9ecef; color: #495057; }
+        .time-select-mini { width: auto; font-size: 11px; padding: 1px; height: 22px; margin: 0; display: none; border-color: #d93025; color: #d93025; }
         #result { white-space: pre-wrap; background: #fffbe6; padding: 15px; border: 1px solid #ffe58f; margin-top: 20px; font-size: 14px; display: none; border-radius: 8px; color: #333; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🚑 聯絡表產生器 (v5.8)</h2>
+    <h2>🚑 聯絡表產生器 (v5.9)</h2>
 
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理 / 同步名單</button>
 
     <div id="adminPanel" class="admin-panel">
-        <span class="section-title">✨ 新增自定義人員</span>
+        <span class="section-title">✨ 新增人員</span>
         <select id="newType" onchange="adaptFields()">
             <option value="RM">仁美 (救護)</option><option value="KT">考潭 (救護)</option><option value="PD">坪頂 (救護)</option>
             <option value="SS">嵩山 (救護)</option><option value="WJ">萬金 (救護)</option>
-            <option value="DutyRM">戰情官 (仁美)</option><option value="DutyKT">戰情官 (考潭)</option><option value="DutyPD">戰情官 (坪頂)</option>
+            <option value="DutyRM">戰情 (仁美)</option><option value="DutyKT">戰情 (考潭)</option><option value="DutyPD">戰情 (坪頂)</option>
             <option value="OS">總值星官</option><option value="GQ">高勤官</option>
         </select>
-        <input type="text" id="newUnit" placeholder="單位 / 級職 (例: 砲三營 / 情報官中尉)">
-        <input type="text" id="newRank" placeholder="階級 (例: 下士 / 中校)">
+        <input type="text" id="newUnit" placeholder="單位 / 級職">
+        <input type="text" id="newRank" placeholder="階級 (中校/上士...)">
         <input type="text" id="newName" placeholder="姓名">
         <input type="tel" id="newPhone" placeholder="手機 (例: 0912-123456)" oninput="formatPhone(this)" maxlength="11">
         <button onclick="addNewContact()" style="background:#27ae60; padding: 10px; font-size: 16px;">確認新增</button>
         <hr>
-        <span class="section-title">📲 同步備份</span>
-        <button onclick="exportData()" style="background:#6c757d; font-size:12px; padding:5px; margin-bottom:5px;">匯出代碼</button>
-        <textarea id="syncData" placeholder="在此貼上匯入代碼..." style="height:40px; font-size:12px;"></textarea>
-        <button onclick="importData()" style="background:#17a2b8; font-size:12px; padding:5px;">匯入名單</button>
-        <hr>
-        <div class="collapse-btn" onclick="toggleCollapse('listFull')">📂 查看完整名單 <span id="listFullIcon">▼</span></div>
+        <div class="collapse-btn" onclick="toggleCollapse('listFull')">📂 查看完整名單 (中文化) <span id="listFullIcon">▼</span></div>
         <div id="listFull" class="collapse-content"></div>
         <button onclick="resetToDefault()" style="background:#d93025; font-size:12px; padding:5px; margin-top:10px;">重設回預設</button>
     </div>
@@ -79,6 +75,13 @@
 </div>
 
 <script>
+// 交接時間選項
+const timeOptions = [
+    {v:'07', t:'07:00'}, {v:'08', t:'08:00'}, {v:'12', t:'12:00'}, 
+    {v:'13', t:'13:00'}, {v:'15', t:'15:00'}, {v:'16', t:'16:00'}, 
+    {v:'17', t:'17:00'}, {v:'18', t:'18:00'}, {v:'20', t:'20:00'}
+];
+
 const defaultData = {
     RM: [ { u: "砲三營", r: "下士", n: "徐約愛", p: "0952-724412" }, { u: "砲三營", r: "一兵", n: "周立郡", p: "0989-177515" } ],
     KT: [ { u: "飛彈連", r: "中士", n: "陳胤仰", p: "0972-848100" } ],
@@ -93,28 +96,22 @@ const defaultData = {
 };
 
 const camps = {
-    RM: { n:'仁美營區', car:'軍H-20662', h:'國軍高雄總醫院🏥', d:'15-20', p:'07-7496591轉7496751' },
-    KT: { n:'考潭營區', car:'軍H-20665', h:'高雄長庚醫院🏥', d:'5-10', p:'07-7317123轉2117' },
-    PD: { n:'坪頂營區', car:'軍H-20378', h:'高雄小港醫院🏥', d:'7', p:'07-8036783' },
-    SS: { n:'嵩山營區', car:'軍H-60142', h:'高雄旗山醫院🏥', d:'10-15', p:'07-6613811' },
-    WJ: { n:'萬金營區', car:'軍H-21049', h:'龍泉榮民醫院🏥', d:'20-25', p:'08-7704115' }
+    RM: { n:'仁美營區', car:'軍H-20662', h:'國軍高雄總醫院🏥', d:'15-20', p:'07-7496591', t:'16' },
+    KT: { n:'考潭營區', car:'軍H-20665', h:'高雄長庚醫院🏥', d:'5-10', p:'07-7317123', t:'16' },
+    PD: { n:'坪頂營區', car:'軍H-20378', h:'高雄小港醫院🏥', d:'7', p:'07-8036783', t:'16' },
+    SS: { n:'嵩山營區', car:'軍H-60142', h:'高雄旗山醫院🏥', d:'10-15', p:'07-6613811', t:'16' },
+    WJ: { n:'萬金營區', car:'軍H-21049', h:'龍泉榮民醫院🏥', d:'20-25', p:'08-7704115', t:'16' }
 };
 
-let db = JSON.parse(localStorage.getItem('ems_renmei_v58')) || JSON.parse(JSON.stringify(defaultData));
-
-function adaptFields() {
-    const type = document.getElementById('newType').value;
-    const isDuty = type.startsWith('Duty');
-    document.getElementById('newRank').style.display = isDuty ? 'none' : 'block';
-    document.getElementById('newUnit').placeholder = isDuty ? "級職 (例: 情報官中尉)" : "單位 (例: 砲三營)";
-}
+let db = JSON.parse(localStorage.getItem('ems_renmei_v59')) || JSON.parse(JSON.stringify(defaultData));
 
 function buildUI() {
     Object.keys(camps).forEach(id => {
+        let timeSelectHtml = timeOptions.map(o => `<option value="${o.v}" ${o.v===camps[id].t?'selected':''}>${o.t}</option>`).join('');
         document.getElementById('ambu'+id).innerHTML = `
             <div class="section-title"><span>📍 ${camps[id].n}</span>
                 <div style="display:flex;gap:5px;align-items:center;">
-                    <select id="t${id}" style="width:auto;font-size:11px;padding:1px;height:22px;margin:0;display:none;" onchange="uL('${id}')"><option value="16">16:00</option><option value="18">18:00</option></select>
+                    <select id="t${id}" class="time-select-mini" onchange="uL('${id}')">${timeSelectHtml}</select>
                     <label style="font-size:11px;color:#d93025;"><input type="checkbox" id="s${id}" onchange="tS('${id}')"> 交接</label>
                 </div>
             </div>
@@ -129,9 +126,10 @@ function buildUI() {
             </div>`;
     });
     [['OS','總值星官','12'],['GQ','高勤官','18']].forEach(a => {
+        let timeSelectHtml = timeOptions.map(o => `<option value="${o.v}" ${o.v===a[2]?'selected':''}>${o.t}</option>`).join('');
         document.getElementById('sec'+a[0]).innerHTML = `
             <div class="section-title"><span>☎️ ${a[1]}</span><label style="font-size:11px;"><input type="checkbox" id="s${a[0]}" onchange="tS('${a[0]}')"> 交接</label></div>
-            <select id="t${a[0]}" style="width:auto;font-size:11px;padding:1px;height:22px;margin:0;display:none;" onchange="uL('${a[0]}')"><option value="${a[2]}">${a[2]}:00</option><option value="16">16:00</option></select>
+            <select id="t${a[0]}" class="time-select-mini" onchange="uL('${a[0]}')">${timeSelectHtml}</select>
             <div class="sub-group"><span id="l${a[0]}1" class="time-tag" style="display:none;">${a[2]}前</span><select id="sel${a[0]}1" onchange="upP('sel${a[0]}1','${a[0]}1P')"></select><input type="text" id="${a[0]}1P" readonly class="readonly-input"></div>
             <div id="g${a[0]}2" class="sub-group" style="display:none;"><span id="l${a[0]}2" class="time-tag">${a[2]}後</span><select id="sel${a[0]}2" onchange="upP('sel${a[0]}2','${a[0]}2P')"></select><input type="text" id="${a[0]}2P" readonly class="readonly-input"></div>`;
     });
@@ -182,9 +180,10 @@ function addNewContact(){
 
 function renderAdminList() {
     const div = document.getElementById('listFull'); div.innerHTML = '';
+    const keyMap = { RM:'仁美', KT:'考潭', PD:'坪頂', SS:'嵩山', WJ:'萬金', DutyRM:'戰情仁美', DutyKT:'戰情考潭', DutyPD:'戰情坪頂', OS:'總值星', GQ:'高勤' };
     Object.keys(db).forEach(k => {
         (db[k]||[]).forEach((p, i) => {
-            let txt = `[${k}] ` + (p.u?p.u:p.t) + (p.r?p.r:'') + p.n;
+            let txt = `[${keyMap[k] || k}] ` + (p.u?p.u:p.t) + (p.r?p.r:'') + p.n;
             div.innerHTML += `<div class="contact-item"><span>${txt}</span><span class="del-btn" onclick="del('${k}',${i})">✕</span></div>`;
         });
     });
@@ -192,12 +191,16 @@ function renderAdminList() {
 
 function formatPhone(el) { let v = el.value.replace(/\D/g,''); if(v.length>4) v = v.slice(0,4)+'-'+v.slice(4,10); el.value=v; }
 function toggleAdmin(){ const p=document.getElementById('adminPanel'); p.style.display=p.style.display==='block'?'none':'block'; adaptFields(); }
+function adaptFields(){
+    const type = document.getElementById('newType').value;
+    const isDuty = type.startsWith('Duty');
+    document.getElementById('newRank').style.display = isDuty ? 'none' : 'block';
+    document.getElementById('newUnit').placeholder = isDuty ? "級職 (例: 情報官中尉)" : "單位 (例: 砲三營)";
+}
 function toggleCollapse(id){ const c=document.getElementById(id); c.style.display=c.style.display==='block'?'none':'block'; }
-function saveDB(){ localStorage.setItem('ems_renmei_v58', JSON.stringify(db)); initApp(); }
+function saveDB(){ localStorage.setItem('ems_renmei_v59', JSON.stringify(db)); initApp(); }
 function resetToDefault(){ if(confirm('重設？')){ db=JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
 function del(k,i){ if(confirm('刪除？')){ db[k].splice(i,1); saveDB(); } }
-function exportData(){ navigator.clipboard.writeText(btoa(unescape(encodeURIComponent(JSON.stringify(db))))).then(()=>alert('代碼已複製')); }
-function importData(){ try{ const d=JSON.parse(decodeURIComponent(escape(atob(document.getElementById('syncData').value.trim())))); if(confirm('匯入？')){ db=d; saveDB(); alert('成功'); } }catch(e){ alert('代碼錯誤'); } }
 
 function generateAndCopy() {
     const date = document.getElementById('reportDate').value;
