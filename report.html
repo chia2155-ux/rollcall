@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚑 救護編組產生器-坪頂 (v5.9.2)</title>
+    <title>🚑 救護編組產生器-坪頂 (v5.9.3)</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 15px; background-color: #f0f2f5; line-height: 1.5; }
-        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #1a73e8; margin: 5px 0 15px 0; font-size: 18px; letter-spacing: -0.5px; }
         .section { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #1a73e8; }
         .section-title { font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 1.1em; }
@@ -15,7 +15,7 @@
         label { display: block; margin: 8px 0 4px; font-size: 0.85em; color: #5f6368; font-weight: bold; }
         input, select, textarea { width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #dadce0; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 15px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; margin-top: 10px; }
-        .btn-admin { background-color: #5f6368; font-size: 14px; padding: 8px; margin-bottom: 15px; width: auto; display: block; margin-left: auto; }
+        .btn-admin { background-color: #5f6368; font-size: 14px; padding: 8px; margin-bottom: 15px; width: auto; display: block; margin-left: auto; color: white; border: none; border-radius: 4px; }
         .admin-panel { display: none; background: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #1a73e8; }
         .collapse-btn { width: 100%; text-align: left; background: #fff; color: #333; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; }
         .collapse-content { display: none; padding: 5px 0; }
@@ -30,16 +30,17 @@
 <body>
 
 <div class="container">
-    <h2>🚑 救護編組產生器-坪頂 <span style="font-size: 12px; color: #888;">v5.9.2</span></h2>
-
+    <h2>🚑 救護編組產生器-坪頂 <span style="font-size: 12px; color: #888;">v5.9.3</span></h2>
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理 / 同步名單</button>
 
     <div id="adminPanel" class="admin-panel">
         <span class="section-title">✨ 新增人員</span>
-        <select id="newType" onchange="checkDutyType()">
+        <select id="newType" onchange="adaptFields()">
             <option value="PingDing">坪頂營區</option>
             <option value="SongShan">嵩山營區</option>
             <option value="Duty">戰情官</option>
+            <option value="OS">總值星官</option>
+            <option value="GQ">高勤官</option>
         </select>
         <div id="normalFields">
             <input type="text" id="newUnit" placeholder="單位 (例: 防空營)">
@@ -53,30 +54,21 @@
         <button onclick="addNewContact()" style="background:#27ae60; padding: 10px; font-size: 16px;">確認新增</button>
         
         <hr>
-        
-        <span class="section-title">📲 同步與備份</span>
+        <span class="section-title">📲 同步備份</span>
         <div class="sync-box">
-            <button onclick="exportData()" style="background:#6c757d; font-size:12px; padding:8px;">1. 複製我的名單 (匯出)</button>
+            <button onclick="exportData()" style="background:#6c757d; font-size:12px; padding:5px; color:white; border:none; border-radius:4px;">複製我的名單 (匯出)</button>
             <textarea id="syncData" placeholder="在此貼上匯入代碼..." style="margin-top:10px; font-size:12px; height:60px;"></textarea>
-            <button onclick="importData()" style="background:#17a2b8; font-size:12px; padding:8px;">2. 貼上並匯入名單</button>
+            <button onclick="importData()" style="background:#17a2b8; font-size:12px; padding:5px; color:white; border:none; border-radius:4px;">匯入名單</button>
         </div>
 
         <hr>
-        <span class="section-title">目前人員清單 (中文化)</span>
-        <div class="collapse-btn" onclick="toggleCollapse('listPingDing')">📍 坪頂人員 <span id="listPingDingIcon">▼</span></div>
-        <div id="listPingDing" class="collapse-content"></div>
-        <div class="collapse-btn" onclick="toggleCollapse('listSongShan')">📍 嵩山人員 <span id="listSongShanIcon">▼</span></div>
-        <div id="listSongShan" class="collapse-content"></div>
-        <div class="collapse-btn" onclick="toggleCollapse('listDuty')">☎️ 戰情官名單 <span id="listDutyIcon">▼</span></div>
-        <div id="listDuty" class="collapse-content"></div>
+        <div class="collapse-btn" onclick="toggleCollapse('listFull')">📂 查看完整名單 (中文化) <span id="listFullIcon">▼</span></div>
+        <div id="listFull" class="collapse-content"></div>
 
-        <button onclick="resetToDefault()" style="background:#d93025; font-size:12px; padding:5px; margin-top:15px;">⚠️ 重設回預設名單</button>
+        <button onclick="resetToDefault()" style="background:#d93025; font-size:12px; padding:5px; margin-top:15px; color:white; border:none; border-radius:4px;">⚠️ 重設回預設 (恢復內建名單)</button>
     </div>
     
-    <div class="section">
-        <label>📅 報告日期</label>
-        <input type="text" id="reportDate">
-    </div>
+    <div class="section"><label>📅 報告日期</label><input type="text" id="reportDate"></div>
 
     <div class="section" style="border-left-color: #e67e22;">
         <div class="section-title">
@@ -139,138 +131,94 @@
         <input type="text" id="milLine" value="712318" readonly class="readonly-input">
     </div>
 
-    <button onclick="generateAndCopy()">生成並一鍵複製</button>
+    <button onclick="generateAndCopy()">生成回報並複製</button>
     <div id="result"></div>
 </div>
 
 <script>
+// --- 預設人員資料 (內建你提供的名單) ---
 const defaultData = {
     PingDing: [
         { unit: "防空營", rank: "上士", name: "蔡淑賢", phone: "0954-139130" },
         { unit: "防空營", rank: "中士", name: "王建蒝", phone: "0988-610231" },
         { unit: "防空營", rank: "下士", name: "謝佳霖", phone: "0980-516200" },
         { unit: "防空營", rank: "一兵", name: "張秦一哥", phone: "0928-101087" },
-        { unit: "防空營", rank: "上士", name: "謝倉玄", phone: "0917-186363" }
+        { unit: "防空營", rank: "上士", name: "謝倉玄", phone: "0917-186363" },
+        { unit: "防空營", rank: "上士", name: "蘇精翰", phone: "0977-278668" }
     ],
     SongShan: [
         { unit: "防空暨飛彈指揮部", rank: "少校", name: "林政融", phone: "0978-125970" },
-        { unit: "防空暨飛彈指揮部", rank: "上尉", name: "田家增", phone: "0909-500707" }
+        { unit: "防空暨飛彈指揮部", rank: "少校", name: "鄭光惠", phone: "0970-595206" },
+        { unit: "防空暨飛彈指揮部", rank: "上尉", name: "田家增", phone: "0909-500707" },
+        { unit: "防空暨飛彈指揮部", rank: "上尉", name: "黃則誠", phone: "0980-634376" },
+        { unit: "防空暨飛彈指揮部", rank: "上士", name: "楊立楷", phone: "0922-077946" },
+        { unit: "防空暨飛彈指揮部", rank: "上士", name: "許詠傑", phone: "0972-313053" },
+        { unit: "防空暨飛彈指揮部", rank: "上士", name: "林孝璋", phone: "0916-347007" },
+        { unit: "防空暨飛彈指揮部", rank: "下士", name: "陳佩歆", phone: "0981-213859" },
+        { unit: "防空暨飛彈指揮部", rank: "下士", name: "周哲宇", phone: "0938-013937" },
+        { unit: "防空暨飛彈指揮部", rank: "下士", name: "張宇婷", phone: "0930-526663" },
+        { unit: "防空暨飛彈指揮部", rank: "下士", name: "盧傳承", phone: "0916-008996" }
     ],
     Duty: [
-        { title: "通信官中尉", name: "王蔚", civ: "07-8913762", mil: "712318" }
-    ]
+        { title: "情報官中尉", name: "陳家俊" },
+        { title: "飛技官中尉", name: "洪星瑋" },
+        { title: "作訓官中尉", name: "張晉愷" },
+        { title: "通信官中尉", name: "王蔚" },
+        { title: "後勤官中尉", name: "鄭家澄" },
+        { title: "訓練官中尉", name: "楊善宭" }
+    ],
+    OS: [], GQ: []
 };
 
-let db = JSON.parse(localStorage.getItem('ems_pingding_v592')) || JSON.parse(JSON.stringify(defaultData));
+// 使用新版本號確保讀取新名單
+let db = JSON.parse(localStorage.getItem('ems_pingding_v593')) || JSON.parse(JSON.stringify(defaultData));
 
-function toggleSplit(key) {
-    const isS = document.getElementById('split' + key).checked;
-    document.getElementById('group' + key + '2').style.display = isS ? 'block' : 'none';
-    document.getElementById('label' + key + '1').style.display = isS ? 'inline-block' : 'none';
-    document.getElementById('time' + key).style.display = isS ? 'inline-block' : 'none';
-    updateLabels(key);
-}
+function formatPhone(el) { let v = el.value.replace(/\D/g, ''); if (v.length > 4) v = v.slice(0, 4) + '-' + v.slice(4, 10); el.value = v; }
+function toggleCollapse(id) { const c = document.getElementById(id); const i = document.getElementById(id + 'Icon'); c.style.display = c.style.display === 'block' ? 'none' : 'block'; i.innerText = c.style.display === 'block' ? '▲' : '▼'; }
+function toggleAdmin() { const p = document.getElementById('adminPanel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; adaptFields(); }
+function saveDB() { localStorage.setItem('ems_pingding_v593', JSON.stringify(db)); initApp(); }
+function resetToDefault() { if(confirm('這將清空你手動新增的人員，並恢復到我剛幫你排好的預設名單。確定嗎？')) { db = JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
 
-function updateLabels(key) {
-    const val = document.getElementById('time' + key).value;
-    document.getElementById('label' + key + '1').innerText = val + "前";
-    document.getElementById('label' + key + '2').innerText = val + "後";
-}
-
-function exportData() {
-    const dataStr = btoa(unescape(encodeURIComponent(JSON.stringify(db))));
-    navigator.clipboard.writeText(dataStr).then(() => alert('已複製同步代碼！'));
-}
-
-function importData() {
-    const input = document.getElementById('syncData').value.trim();
-    if(!input) return alert('請先貼上代碼');
-    try {
-        const decoded = JSON.parse(decodeURIComponent(escape(atob(input))));
-        if(confirm('匯入將覆蓋目前手機名單，確定嗎？')) {
-            db = decoded; saveDB(); alert('匯入成功！');
-        }
-    } catch(e) { alert('代碼錯誤！'); }
-}
-
-function formatPhone(el) {
-    let val = el.value.replace(/\D/g, ''); 
-    if (val.length > 4) val = val.slice(0, 4) + '-' + val.slice(4, 10);
-    el.value = val;
-}
-
-function checkDutyType() {
+function adaptFields() {
     const type = document.getElementById('newType').value;
-    document.getElementById('normalFields').style.display = (type === 'Duty') ? 'none' : 'block';
-    document.getElementById('dutyFields').style.display = (type === 'Duty') ? 'block' : 'none';
-    document.getElementById('newPhone').style.display = (type === 'Duty') ? 'none' : 'block';
-}
-
-function toggleCollapse(id) {
-    const content = document.getElementById(id);
-    const icon = document.getElementById(id + 'Icon');
-    content.style.display = content.style.display === 'block' ? 'none' : 'block';
-    icon.innerText = content.style.display === 'block' ? '▲' : '▼';
-}
-
-function saveDB() {
-    localStorage.setItem('ems_pingding_v592', JSON.stringify(db));
-    initApp();
-}
-
-function resetToDefault() {
-    if(confirm('重設將清空自定義名單。確定嗎？')) {
-        db = JSON.parse(JSON.stringify(defaultData)); saveDB();
-    }
-}
-
-function toggleAdmin() {
-    const p = document.getElementById('adminPanel');
-    p.style.display = p.style.display === 'block' ? 'none' : 'block';
-    renderAdminList();
+    const isDuty = type === 'Duty';
+    document.getElementById('normalFields').style.display = isDuty ? 'none' : 'block';
+    document.getElementById('dutyFields').style.display = isDuty ? 'block' : 'none';
+    document.getElementById('newPhone').style.display = isDuty ? 'none' : 'block';
 }
 
 function addNewContact() {
-    const type = document.getElementById('newType').value;
-    const name = document.getElementById('newName').value;
-    const phone = document.getElementById('newPhone').value;
-    if(!name) return alert('姓名為必填！');
-    if(type !== 'Duty' && !phone) return alert('電話為必填！');
-
-    if(type === 'Duty') {
-        const title = document.getElementById('newTitle').value;
-        db.Duty.push({ title: title, name: name, civ: "07-8913762", mil: "712318" });
+    const t = document.getElementById('newType').value;
+    const n = document.getElementById('newName').value;
+    const p = document.getElementById('newPhone').value;
+    if(!n) return alert('姓名必填');
+    if(t === 'Duty') {
+        db.Duty.push({ title: document.getElementById('newTitle').value, name: n });
     } else {
-        const unit = document.getElementById('newUnit').value;
-        const rank = document.getElementById('newRank').value;
-        db[type].push({ unit, rank, name, phone });
+        const u = document.getElementById('newUnit').value;
+        const r = document.getElementById('newRank').value;
+        if(!db[t]) db[t] = [];
+        db[t].push({ unit: u, rank: r, name: n, phone: p });
     }
     saveDB();
     ['newUnit','newRank','newTitle','newName','newPhone'].forEach(id=>document.getElementById(id).value='');
 }
 
-function deleteContact(type, index) {
-    if(confirm('確定刪除？')) { db[type].splice(index, 1); saveDB(); }
-}
+function del(k, i) { if(confirm('刪除？')) { db[k].splice(i, 1); saveDB(); } }
 
 function renderAdminList() {
-    const render = (type, targetId, label) => {
-        const div = document.getElementById(targetId);
-        div.innerHTML = '';
-        db[type].forEach((p, i) => {
-            const displayName = (type === 'Duty') ? p.title + p.name : p.unit + p.rank + p.name;
-            div.innerHTML += `<div class="contact-item"><span>[${label}] ${displayName}</span><span class="del-btn" onclick="deleteContact('${type}', ${i})">✕</span></div>`;
+    const div = document.getElementById('listFull'); div.innerHTML = '';
+    const map = { PingDing:'坪頂', SongShan:'嵩山', Duty:'戰情', OS:'值星', GQ:'高勤' };
+    Object.keys(db).forEach(k => {
+        (db[k]||[]).forEach((p, i) => {
+            let txt = `[${map[k]||k}] ` + (p.unit?p.unit+p.rank+p.name : p.title+p.name);
+            div.innerHTML += `<div class="contact-item"><span>${txt}</span><span class="del-btn" onclick="del('${k}',${i})">✕</span></div>`;
         });
-    };
-    render('PingDing', 'listPingDing', '坪頂');
-    render('SongShan', 'listSongShan', '嵩山');
-    render('Duty', 'listDuty', '戰情');
+    });
 }
 
 function initApp() {
-    document.getElementById('reportDate').value = (new Date().getMonth() + 1) + "月" + new Date().getDate() + "日";
-    
-    // 填充下拉選單
+    document.getElementById('reportDate').value = (new Date().getMonth()+1)+"月"+new Date().getDate()+"日";
     const fill = (id, list) => {
         const el = document.getElementById(id); if(!el) return;
         el.innerHTML = '<option value="">-- 請選擇 --</option>';
@@ -279,52 +227,60 @@ function initApp() {
             el.innerHTML += `<option value="${txt}" data-phone="${p.phone||''}">${txt}</option>`;
         });
     };
-
-    fill('leader1', db.PingDing); fill('driver1', db.PingDing);
-    fill('leader1_2', db.PingDing); fill('driver1_2', db.PingDing);
-    fill('leader2', db.SongShan); fill('driver2', db.SongShan);
-    fill('leader2_2', db.SongShan); fill('driver2_2', db.SongShan);
+    ['1','1_2'].forEach(x => { fill('leader'+x, db.PingDing); fill('driver'+x, db.PingDing); });
+    ['2','2_2'].forEach(x => { fill('leader'+x, db.SongShan); fill('driver'+x, db.SongShan); });
     
-    const dutySel = document.getElementById('dutyOfficerSelect');
-    dutySel.innerHTML = '<option value="">-- 選擇戰情人員 --</option>';
-    db.Duty.forEach((p, index) => {
-        dutySel.innerHTML += `<option value="${index}">${p.title}${p.name}</option>`;
-    });
+    const dSel = document.getElementById('dutyOfficerSelect'); dSel.innerHTML = '<option value="">-- 選擇戰情人員 --</option>';
+    db.Duty.forEach((p, i) => dSel.innerHTML += `<option value="${i}">${p.title}${p.name}</option>`);
     renderAdminList();
 }
 
-function updatePhone(selectId, phoneId) {
-    const sel = document.getElementById(selectId);
-    document.getElementById(phoneId).value = sel.options[sel.selectedIndex].dataset.phone || "";
+function toggleSplit(k) {
+    const s = document.getElementById('split'+k).checked;
+    document.getElementById('group'+k+'2').style.display = s?'block':'none';
+    document.getElementById('label'+k+'1').style.display = s?'inline-block':'none';
+    document.getElementById('time'+k).style.display = s?'inline-block':'none';
+    updateLabels(k);
+}
+function updateLabels(k) {
+    const v = document.getElementById('time'+k).value;
+    document.getElementById('label'+k+'1').innerText = v+"前";
+    document.getElementById('label'+k+'2').innerText = v+"後";
+}
+function updatePhone(s, p) { document.getElementById(p).value = document.getElementById(s).options[document.getElementById(s).selectedIndex].dataset.phone || ""; }
+function updateDuty() {
+    const i = document.getElementById('dutyOfficerSelect').value;
+    if(i!=="") document.getElementById('dutyName').value = db.Duty[i].title + db.Duty[i].name;
 }
 
-function updateDuty() {
-    const idx = document.getElementById('dutyOfficerSelect').value;
-    if(idx !== "") {
-        const p = db.Duty[idx];
-        document.getElementById('dutyName').value = p.title + p.name;
-    }
+function exportData() { navigator.clipboard.writeText(btoa(unescape(encodeURIComponent(JSON.stringify(db))))).then(() => alert('已複製代碼！')); }
+function importData() {
+    try {
+        const d = JSON.parse(decodeURIComponent(escape(atob(document.getElementById('syncData').value.trim()))));
+        if(confirm('匯入？')) { db = d; saveDB(); alert('成功！'); }
+    } catch(e) { alert('代碼錯誤！'); }
 }
 
 function generateAndCopy() {
     const date = document.getElementById('reportDate').value;
-    const isSPD = document.getElementById('splitPD').checked;
-    const tPD = document.getElementById('timePD').value;
-    const isSSS = document.getElementById('splitSS').checked;
-    const tSS = document.getElementById('timeSS').value;
-
+    const getV = (id) => document.getElementById(id).value;
+    
     let res = `${date}砲指部緊急傷病聯絡表：\n\n坪頂營區\n🚑救護車🚑`;
-    res += `\n${isSPD ? tPD+'前\n' : ''}車號：${document.getElementById('car1').value}\n車長：${document.getElementById('leader1').value}\n${document.getElementById('leader1Phone').value}\n駕駛：${document.getElementById('driver1').value}\n${document.getElementById('driver1Phone').value}`;
-    if(isSPD) res += `\n\n${tPD}後\n車號：${document.getElementById('car1').value}\n車長：${document.getElementById('leader1_2').value}\n${document.getElementById('leader1Phone_2').value}\n駕駛：${document.getElementById('driver1_2').value}\n${document.getElementById('driver1Phone_2').value}`;
+    const sPD = document.getElementById('splitPD').checked; const tPD = getV('timePD');
+    res += `\n${sPD?tPD+'前\n':''}車號：${getV('car1')}\n車長：${getV('leader1')}\n${getV('leader1Phone')}\n駕駛：${getV('driver1')}\n${getV('driver1Phone')}`;
+    if(sPD) res += `\n\n${tPD}後\n車號：${getV('car1')}\n車長：${getV('leader1_2')}\n${getV('leader1Phone_2')}\n駕駛：${getV('driver1_2')}\n${getV('driver1Phone_2')}`;
+    res += `\n\n區域醫院：高雄小港醫院🏥\n後送路程：約7分鐘\n聯絡電話：07-8036783`;
 
-    res += `\n\n區域醫院：高雄小港醫院🏥\n後送路程：約7分鐘\n聯絡電話：07-8036783\n\n嵩山營區\n🚑救護車🚑`;
-    res += `\n${isSSS ? tSS+'前\n' : ''}車號：${document.getElementById('car2').value}\n車長：${document.getElementById('leader2').value}\n${document.getElementById('leader2Phone').value}\n駕駛：${document.getElementById('driver2').value}\n${document.getElementById('driver2Phone').value}`;
-    if(isSSS) res += `\n\n${tSS}後\n車號：${document.getElementById('car2').value}\n車長：${document.getElementById('leader2_2').value}\n${document.getElementById('leader2Phone_2').value}\n駕駛：${document.getElementById('driver2_2').value}\n${document.getElementById('driver2Phone_2').value}`;
+    res += `\n\n嵩山營區\n🚑救護車🚑`;
+    const sSS = document.getElementById('splitSS').checked; const tSS = getV('timeSS');
+    res += `\n${sSS?tSS+'前\n':''}車號：${getV('car2')}\n車長：${getV('leader2')}\n${getV('leader2Phone')}\n駕駛：${getV('driver2')}\n${getV('driver2Phone')}`;
+    if(sSS) res += `\n\n${tSS}後\n車號：${getV('car2')}\n車長：${getV('leader2_2')}\n${getV('leader2Phone_2')}\n駕駛：${getV('driver2_2')}\n${getV('driver2Phone_2')}`;
+    res += `\n\n區域醫院：高雄旗山醫院🏥\n後送路程：約10-15分鐘\n聯絡電話：07-6613811`;
 
-    res += `\n\n區域醫院：高雄旗山醫院🏥\n後送路程：約10-15分鐘\n聯絡電話：07-6613811\n\n☎️戰情官☎️\n坪頂營區\n${document.getElementById('dutyName').value}\n民線：${document.getElementById('civLine').value}\n軍線：${document.getElementById('milLine').value}`;
+    res += `\n\n☎️戰情官☎️\n坪頂營區\n${getV('dutyName')}\n民線：07-8913762\n軍線：712318`;
 
     const r = document.getElementById('result'); r.innerText = res; r.style.display = 'block';
-    navigator.clipboard.writeText(res).then(() => alert('已生成並複製！'));
+    navigator.clipboard.writeText(res).then(() => alert('已複製！'));
 }
 
 initApp();
