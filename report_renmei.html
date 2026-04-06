@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>緊急回報系統 v5.9 (多時段中文化版)</title>
+    <title>緊急回報系統 v5.9.1 (修復級職顯示)</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 10px; background-color: #f0f2f5; line-height: 1.4; }
         .container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -22,15 +22,14 @@
         .contact-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin-top: 3px; border-radius: 4px; font-size: 13px; border: 1px solid #eee; }
         .del-btn { color: #d93025; cursor: pointer; font-weight: bold; padding: 2px 8px; }
         .readonly-input { background-color: #e9ecef; color: #495057; }
-        .time-select-mini { width: auto; font-size: 11px; padding: 1px; height: 22px; margin: 0; display: none; border-color: #d93025; color: #d93025; }
-        #result { white-space: pre-wrap; background: #fffbe6; padding: 15px; border: 1px solid #ffe58f; margin-top: 20px; font-size: 14px; display: none; border-radius: 8px; color: #333; }
+        .time-select-mini { width: auto; font-size: 11px; padding: 1px; height: 22px; margin: 0; display: none; }
+        #result { white-space: pre-wrap; background: #fffbe6; padding: 15px; border: 1px solid #ffe58f; margin-top: 20px; font-size: 14px; display: none; border-radius: 8px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🚑 聯絡表產生器 (v5.9)</h2>
-
+    <h2>🚑 聯絡表產生器 (v5.9.1)</h2>
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理 / 同步名單</button>
 
     <div id="adminPanel" class="admin-panel">
@@ -47,13 +46,12 @@
         <input type="tel" id="newPhone" placeholder="手機 (例: 0912-123456)" oninput="formatPhone(this)" maxlength="11">
         <button onclick="addNewContact()" style="background:#27ae60; padding: 10px; font-size: 16px;">確認新增</button>
         <hr>
-        <div class="collapse-btn" onclick="toggleCollapse('listFull')">📂 查看完整名單 (中文化) <span id="listFullIcon">▼</span></div>
+        <div class="collapse-btn" onclick="toggleCollapse('listFull')">📂 查看完整名單 <span id="listFullIcon">▼</span></div>
         <div id="listFull" class="collapse-content"></div>
         <button onclick="resetToDefault()" style="background:#d93025; font-size:12px; padding:5px; margin-top:10px;">重設回預設</button>
     </div>
 
     <div class="section"><label>📅 報告日期</label><input type="text" id="reportDate"></div>
-
     <div id="ambuRM" class="section" style="border-left-color: #d93025;"></div>
     <div id="ambuKT" class="section" style="border-left-color: #f2994a;"></div>
     <div id="ambuPD" class="section" style="border-left-color: #27ae60;"></div>
@@ -66,7 +64,6 @@
         <label>考潭戰情</label><select id="selDutyKT"></select>
         <label>坪頂戰情</label><select id="selDutyPD"></select>
     </div>
-
     <div id="secOS" class="section" style="border-left-color: #e67e22;"></div>
     <div id="secGQ" class="section" style="border-left-color: #eb5757;"></div>
 
@@ -75,45 +72,33 @@
 </div>
 
 <script>
-// 交接時間選項
-const timeOptions = [
-    {v:'07', t:'07:00'}, {v:'08', t:'08:00'}, {v:'12', t:'12:00'}, 
-    {v:'13', t:'13:00'}, {v:'15', t:'15:00'}, {v:'16', t:'16:00'}, 
-    {v:'17', t:'17:00'}, {v:'18', t:'18:00'}, {v:'20', t:'20:00'}
-];
-
+const timeOptions = [{v:'07',t:'07:00'},{v:'08',t:'08:00'},{v:'12',t:'12:00'},{v:'13',t:'13:00'},{v:'15',t:'15:00'},{v:'16',t:'16:00'},{v:'17',t:'17:00'},{v:'18',t:'18:00'},{v:'20',t:'20:00'}];
 const defaultData = {
-    RM: [ { u: "砲三營", r: "下士", n: "徐約愛", p: "0952-724412" }, { u: "砲三營", r: "一兵", n: "周立郡", p: "0989-177515" } ],
-    KT: [ { u: "飛彈連", r: "中士", n: "陳胤仰", p: "0972-848100" } ],
-    PD: [ { u: "防空營", r: "上士", n: "謝倉玄", p: "0917-186363" } ],
-    SS: [ { u: "防指部", r: "上尉", n: "田家增", p: "0909-500707" } ],
-    WJ: [ { u: "三三三旅", r: "上尉", n: "孫士勛", p: "0920-668718" } ],
-    DutyRM: [ { t: "經理官中尉", n: "蔡金翰" } ],
-    DutyKT: [ { t: "觀通組長中尉", n: "林榆恩" } ],
-    DutyPD: [ { t: "情報官中尉", n: "陳家俊" } ],
-    OS: [ { t: "火協組長", r: "中校", n: "林侑聖", p: "0980-660304" } ],
-    GQ: [ { t: "副指揮官", r: "上校", n: "何相儀", p: "0932-490363" } ]
+    RM: [{u:"砲三營",r:"下士",n:"徐約愛",p:"0952-724412"},{u:"砲三營",r:"一兵",n:"周立郡",p:"0989-177515"}],
+    KT: [{u:"飛彈連",r:"中士",n:"陳胤仰",p:"0972-848100"}],
+    PD: [{u:"防空營",r:"上士",n:"謝倉玄",p:"0917-186363"}],
+    SS: [{u:"防指部",r:"上尉",n:"田家增",p:"0909-500707"}],
+    WJ: [{u:"三三三旅",r:"上尉",n:"孫士勛",p:"0920-668718"}],
+    DutyRM: [{t:"經理官中尉",n:"蔡金翰"}], DutyKT: [{t:"觀通組長中尉",n:"林榆恩"}], DutyPD: [{t:"情報官中尉",n:"陳家俊"}],
+    OS: [{t:"火協組長",r:"中校",n:"林侑聖",p:"0980-660304"}], GQ: [{t:"副參謀主任",r:"中校",n:"凃統憲",p:"0933-994547"}]
 };
-
 const camps = {
-    RM: { n:'仁美營區', car:'軍H-20662', h:'國軍高雄總醫院🏥', d:'15-20', p:'07-7496591', t:'16' },
-    KT: { n:'考潭營區', car:'軍H-20665', h:'高雄長庚醫院🏥', d:'5-10', p:'07-7317123', t:'16' },
-    PD: { n:'坪頂營區', car:'軍H-20378', h:'高雄小港醫院🏥', d:'7', p:'07-8036783', t:'16' },
-    SS: { n:'嵩山營區', car:'軍H-60142', h:'高雄旗山醫院🏥', d:'10-15', p:'07-6613811', t:'16' },
-    WJ: { n:'萬金營區', car:'軍H-21049', h:'龍泉榮民醫院🏥', d:'20-25', p:'08-7704115', t:'16' }
+    RM:{n:'仁美營區',car:'軍H-20662',h:'國軍高雄總醫院🏥',d:'15-20',p:'07-7496591',t:'16'},
+    KT:{n:'考潭營區',car:'軍H-20665',h:'高雄長庚醫院🏥',d:'5-10',p:'07-7317123',t:'16'},
+    PD:{n:'坪頂營區',car:'軍H-20378',h:'高雄小港醫院🏥',d:'7',p:'07-8036783',t:'16'},
+    SS:{n:'嵩山營區',car:'軍H-60142',h:'高雄旗山醫院🏥',d:'10-15',p:'07-6613811',t:'16'},
+    WJ:{n:'萬金營區',car:'軍H-21049',h:'龍泉榮民醫院🏥',d:'20-25',p:'08-7704115',t:'16'}
 };
 
-let db = JSON.parse(localStorage.getItem('ems_renmei_v59')) || JSON.parse(JSON.stringify(defaultData));
+let db = JSON.parse(localStorage.getItem('ems_renmei_v591')) || JSON.parse(JSON.stringify(defaultData));
 
 function buildUI() {
     Object.keys(camps).forEach(id => {
-        let timeSelectHtml = timeOptions.map(o => `<option value="${o.v}" ${o.v===camps[id].t?'selected':''}>${o.t}</option>`).join('');
+        let tsH = timeOptions.map(o=>`<option value="${o.v}" ${o.v===camps[id].t?'selected':''}>${o.t}</option>`).join('');
         document.getElementById('ambu'+id).innerHTML = `
             <div class="section-title"><span>📍 ${camps[id].n}</span>
-                <div style="display:flex;gap:5px;align-items:center;">
-                    <select id="t${id}" class="time-select-mini" onchange="uL('${id}')">${timeSelectHtml}</select>
-                    <label style="font-size:11px;color:#d93025;"><input type="checkbox" id="s${id}" onchange="tS('${id}')"> 交接</label>
-                </div>
+                <div style="display:flex;gap:5px;align-items:center;"><select id="t${id}" class="time-select-mini" onchange="uL('${id}')">${tsH}</select>
+                <label style="font-size:11px;color:#d93025;"><input type="checkbox" id="s${id}" onchange="tS('${id}')"> 交接</label></div>
             </div>
             <label>車號</label><input type="text" id="car${id}" value="${camps[id].car}">
             <div class="sub-group"><span id="l${id}1" class="time-tag" style="display:none;">16前</span>
@@ -126,10 +111,10 @@ function buildUI() {
             </div>`;
     });
     [['OS','總值星官','12'],['GQ','高勤官','18']].forEach(a => {
-        let timeSelectHtml = timeOptions.map(o => `<option value="${o.v}" ${o.v===a[2]?'selected':''}>${o.t}</option>`).join('');
+        let tsH = timeOptions.map(o=>`<option value="${o.v}" ${o.v===a[2]?'selected':''}>${o.t}</option>`).join('');
         document.getElementById('sec'+a[0]).innerHTML = `
             <div class="section-title"><span>☎️ ${a[1]}</span><label style="font-size:11px;"><input type="checkbox" id="s${a[0]}" onchange="tS('${a[0]}')"> 交接</label></div>
-            <select id="t${a[0]}" class="time-select-mini" onchange="uL('${a[0]}')">${timeSelectHtml}</select>
+            <select id="t${a[0]}" class="time-select-mini" onchange="uL('${a[0]}')">${tsH}</select>
             <div class="sub-group"><span id="l${a[0]}1" class="time-tag" style="display:none;">${a[2]}前</span><select id="sel${a[0]}1" onchange="upP('sel${a[0]}1','${a[0]}1P')"></select><input type="text" id="${a[0]}1P" readonly class="readonly-input"></div>
             <div id="g${a[0]}2" class="sub-group" style="display:none;"><span id="l${a[0]}2" class="time-tag">${a[2]}後</span><select id="sel${a[0]}2" onchange="upP('sel${a[0]}2','${a[0]}2P')"></select><input type="text" id="${a[0]}2P" readonly class="readonly-input"></div>`;
     });
@@ -156,7 +141,7 @@ function initApp() {
         const el = document.getElementById(id); if(!el) return;
         el.innerHTML = '<option value="">-- 請選擇 --</option>';
         list.forEach(i => {
-            let txt = m==='duty'?(i.t+i.n):(m==='off'?(i.t+i.r+i.n):(i.u+i.r+i.n));
+            let txt = (m==='duty' || m==='off') ? ( (i.t||'') + (i.r||'') + i.n ) : (i.u + i.r + i.n);
             el.innerHTML += `<option value="${txt}" data-phone="${i.p||''}">${txt}</option>`;
         });
     };
@@ -174,6 +159,7 @@ function addNewContact(){
     const p = document.getElementById('newPhone').value;
     if(!n) return alert('姓名必填');
     if(t.startsWith('Duty')) db[t].push({ t: u, n: n });
+    else if(t==='OS' || t==='GQ') db[t].push({ t: u, r: r, n: n, p: p });
     else db[t].push({ u: u, r: r, n: n, p: p });
     saveDB();
 }
@@ -183,7 +169,7 @@ function renderAdminList() {
     const keyMap = { RM:'仁美', KT:'考潭', PD:'坪頂', SS:'嵩山', WJ:'萬金', DutyRM:'戰情仁美', DutyKT:'戰情考潭', DutyPD:'戰情坪頂', OS:'總值星', GQ:'高勤' };
     Object.keys(db).forEach(k => {
         (db[k]||[]).forEach((p, i) => {
-            let txt = `[${keyMap[k] || k}] ` + (p.u?p.u:p.t) + (p.r?p.r:'') + p.n;
+            let txt = `[${keyMap[k] || k}] ` + (p.u||p.t||'') + (p.r||'') + p.n;
             div.innerHTML += `<div class="contact-item"><span>${txt}</span><span class="del-btn" onclick="del('${k}',${i})">✕</span></div>`;
         });
     });
@@ -195,10 +181,10 @@ function adaptFields(){
     const type = document.getElementById('newType').value;
     const isDuty = type.startsWith('Duty');
     document.getElementById('newRank').style.display = isDuty ? 'none' : 'block';
-    document.getElementById('newUnit').placeholder = isDuty ? "級職 (例: 情報官中尉)" : "單位 (例: 砲三營)";
+    document.getElementById('newUnit').placeholder = isDuty ? "級職 (例: 情報官中尉)" : "單位 / 職稱 (例: 火協組長)";
 }
 function toggleCollapse(id){ const c=document.getElementById(id); c.style.display=c.style.display==='block'?'none':'block'; }
-function saveDB(){ localStorage.setItem('ems_renmei_v59', JSON.stringify(db)); initApp(); }
+function saveDB(){ localStorage.setItem('ems_renmei_v591', JSON.stringify(db)); initApp(); }
 function resetToDefault(){ if(confirm('重設？')){ db=JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
 function del(k,i){ if(confirm('刪除？')){ db[k].splice(i,1); saveDB(); } }
 
@@ -206,22 +192,18 @@ function generateAndCopy() {
     const date = document.getElementById('reportDate').value;
     const getV = (id) => document.getElementById(id).value;
     let res = `${date}砲指部緊急傷病聯絡表：`;
-
     Object.keys(camps).forEach(id => {
         const isS = document.getElementById('s'+id).checked; const t = getV('t'+id);
         res += `\n\n${camps[id].n}\n🚑救護車🚑\n${isS?t+'前\n':''}車號：${getV('car'+id)}\n車長：${getV('ld'+id+'1')}\n${document.getElementById(id+'1LP').value}\n駕駛：${getV('dr'+id+'1')}\n${document.getElementById(id+'1DP').value}`;
         if(isS) res += `\n\n${t}後\n車號：${getV('car'+id)}\n車長：${getV('ld'+id+'2')}\n${document.getElementById(id+'2LP').value}\n駕駛：${getV('dr'+id+'2')}\n${document.getElementById(id+'2DP').value}`;
         res += `\n\n區域醫院：${camps[id].h}\n後送路程：約${camps[id].d}分鐘\n聯絡電話：${camps[id].p}`;
     });
-
     res += `\n\n☎️戰情官☎️\n仁美營區\n${getV('selDutyRM')}\n民線：07-6510338\n軍線：743900\n\n考潭營區\n${getV('selDutyKT')}\n民線：07-7355924\n軍線：743920\n\n坪頂營區\n${getV('selDutyPD')}\n民線：07-8913762\n軍線：712318`;
-
     [['OS','總值星官'],['GQ','高勤官']].forEach(a => {
         const isS = document.getElementById('s'+a[0]).checked; const t = getV('t'+a[0]);
         res += `\n\n☎️${a[1]}☎️`;
         res += isS ? `\n${t}前\n${getV('sel'+a[0]+'1')}\n電話：${getV(a[0]+'1P')}\n\n${t}後\n${getV('sel'+a[0]+'2')}\n電話：${getV(a[0]+'2P')}` : `\n${getV('sel'+a[0]+'1')}\n電話：${getV(a[0]+'1P')}`;
     });
-
     const out = document.getElementById('result'); out.innerText = res; out.style.display = 'block';
     navigator.clipboard.writeText(res).then(()=>alert("已複製！"));
 }
