@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>緊急回報系統 v5.9.1 (修復級職顯示)</title>
+    <title>緊急回報系統 v5.9.2 (功能全補回版)</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 10px; background-color: #f0f2f5; line-height: 1.4; }
         .container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -23,13 +23,13 @@
         .del-btn { color: #d93025; cursor: pointer; font-weight: bold; padding: 2px 8px; }
         .readonly-input { background-color: #e9ecef; color: #495057; }
         .time-select-mini { width: auto; font-size: 11px; padding: 1px; height: 22px; margin: 0; display: none; }
-        #result { white-space: pre-wrap; background: #fffbe6; padding: 15px; border: 1px solid #ffe58f; margin-top: 20px; font-size: 14px; display: none; border-radius: 8px; }
+        #result { white-space: pre-wrap; background: #fffbe6; padding: 15px; border: 1px solid #ffe58f; margin-top: 20px; font-size: 14px; display: none; border-radius: 8px; color: #333; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🚑 聯絡表產生器 (v5.9.1)</h2>
+    <h2>🚑 聯絡表產生器 (v5.9.2)</h2>
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理 / 同步名單</button>
 
     <div id="adminPanel" class="admin-panel">
@@ -45,6 +45,13 @@
         <input type="text" id="newName" placeholder="姓名">
         <input type="tel" id="newPhone" placeholder="手機 (例: 0912-123456)" oninput="formatPhone(this)" maxlength="11">
         <button onclick="addNewContact()" style="background:#27ae60; padding: 10px; font-size: 16px;">確認新增</button>
+        
+        <hr>
+        <span class="section-title">📲 同步備份</span>
+        <button onclick="exportData()" style="background:#6c757d; font-size:12px; padding:5px; margin-bottom:5px;">複製我的名單 (匯出代碼)</button>
+        <textarea id="syncData" placeholder="在此貼上匯入代碼..." style="height:45px; font-size:12px;"></textarea>
+        <button onclick="importData()" style="background:#17a2b8; font-size:12px; padding:5px;">匯入名單</button>
+        
         <hr>
         <div class="collapse-btn" onclick="toggleCollapse('listFull')">📂 查看完整名單 <span id="listFullIcon">▼</span></div>
         <div id="listFull" class="collapse-content"></div>
@@ -90,7 +97,7 @@ const camps = {
     WJ:{n:'萬金營區',car:'軍H-21049',h:'龍泉榮民醫院🏥',d:'20-25',p:'08-7704115',t:'16'}
 };
 
-let db = JSON.parse(localStorage.getItem('ems_renmei_v591')) || JSON.parse(JSON.stringify(defaultData));
+let db = JSON.parse(localStorage.getItem('ems_renmei_v592')) || JSON.parse(JSON.stringify(defaultData));
 
 function buildUI() {
     Object.keys(camps).forEach(id => {
@@ -184,9 +191,20 @@ function adaptFields(){
     document.getElementById('newUnit').placeholder = isDuty ? "級職 (例: 情報官中尉)" : "單位 / 職稱 (例: 火協組長)";
 }
 function toggleCollapse(id){ const c=document.getElementById(id); c.style.display=c.style.display==='block'?'none':'block'; }
-function saveDB(){ localStorage.setItem('ems_renmei_v591', JSON.stringify(db)); initApp(); }
+function saveDB(){ localStorage.setItem('ems_renmei_v592', JSON.stringify(db)); initApp(); }
 function resetToDefault(){ if(confirm('重設？')){ db=JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
 function del(k,i){ if(confirm('刪除？')){ db[k].splice(i,1); saveDB(); } }
+
+function exportData(){
+    const str = btoa(unescape(encodeURIComponent(JSON.stringify(db))));
+    navigator.clipboard.writeText(str).then(()=>alert('代碼已複製到剪貼簿！'));
+}
+function importData(){
+    try {
+        const d = JSON.parse(decodeURIComponent(escape(atob(document.getElementById('syncData').value.trim()))));
+        if(confirm('匯入將覆蓋目前手機的名單，確定？')){ db=d; saveDB(); alert('匯入成功！'); }
+    } catch(e) { alert('代碼錯誤或不完整！'); }
+}
 
 function generateAndCopy() {
     const date = document.getElementById('reportDate').value;
