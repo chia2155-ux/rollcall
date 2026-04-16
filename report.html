@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚑 救護編組產生器-坪頂 (v5.9.4)</title>
+    <title>🚑 救護編組產生器-坪頂 (v5.9.5)</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 10px; background-color: #f0f2f5; line-height: 1.4; }
         .container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -20,15 +20,19 @@
         .contact-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin-top: 3px; border-radius: 4px; font-size: 13px; border: 1px solid #eee; }
         .del-btn { color: #d93025; cursor: pointer; font-weight: bold; padding: 2px 8px; }
         .readonly-input { background-color: #e9ecef; color: #495057; }
-        .chk-box { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #d93025; cursor: pointer; }
-        .time-select-mini { width: auto; font-size: 11px; padding: 1px; height: 22px; margin: 0; display: none; }
+        
+        /* 修正勾選框排列 */
+        .chk-group { display: flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 12px; color: #d93025; cursor: pointer; }
+        .chk-group input { width: 16px; height: 16px; margin: 0; cursor: pointer; }
+        
+        .time-select-mini { width: auto; font-size: 11px; padding: 1px; height: 24px; margin: 0; display: none; }
         #result { white-space: pre-wrap; background: #fffbe6; padding: 15px; border: 1px solid #ffe58f; margin-top: 20px; font-size: 14px; display: none; border-radius: 8px; color: #333; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🚑 救護編組產生器-坪頂 <span style="font-size: 12px; color: #888;">v5.9.4</span></h2>
+    <h2>🚑 救護編組產生器-坪頂 <span style="font-size: 12px; color: #888;">v5.9.5</span></h2>
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理 / 同步名單</button>
 
     <div id="adminPanel" class="admin-panel">
@@ -40,17 +44,17 @@
         </select>
         <div id="normalFields">
             <input type="text" id="newUnit" placeholder="單位" readonly class="readonly-input">
-            <input type="text" id="newRank" placeholder="階級 (例: 上士)">
+            <input type="text" id="newRank" placeholder="階級">
         </div>
         <div id="dutyFields" style="display:none;">
-            <input type="text" id="newTitle" placeholder="級職 (例: 情報官中尉)">
+            <input type="text" id="newTitle" placeholder="級職">
         </div>
         <input type="text" id="newName" placeholder="姓名">
-        <input type="tel" id="newPhone" placeholder="手機 (自動補橫線)" oninput="formatPhone(this)" maxlength="11">
+        <input type="tel" id="newPhone" placeholder="手機" oninput="formatPhone(this)" maxlength="11">
         <button onclick="addNewContact()" style="background:#27ae60; padding: 10px; font-size: 16px;">確認新增</button>
         <hr>
         <div id="listFull"></div>
-        <button onclick="resetToDefault()" style="background:#d93025; font-size:12px; padding:5px; margin-top:15px;">⚠️ 重設回預設 (修正王建蒝電話)</button>
+        <button onclick="resetToDefault()" style="background:#d93025; font-size:12px; padding:5px; margin-top:15px;">重設回預設</button>
     </div>
     
     <div class="section">
@@ -61,11 +65,11 @@
     <div class="section" style="border-left-color: #e67e22;">
         <div class="section-title">
             <span>📍 坪頂營區</span>
-            <div style="display:flex;gap:5px;align-items:center;">
+            <div style="display:flex;gap:8px;align-items:center;">
                 <select id="timePD" class="time-select-mini" onchange="uL('PD')">
                     <option value="07">07:00</option><option value="0730">07:30</option><option value="08">08:00</option><option value="12">12:00</option><option value="16" selected>16:00</option><option value="18">18:00</option>
                 </select>
-                <label class="chk-box"><input type="checkbox" id="sPD" onchange="tS('PD')"> 交接</label>
+                <label class="chk-group"><input type="checkbox" id="sPD" onchange="tS('PD')"> 交接</label>
             </div>
         </div>
         <label>救護車車號</label><input type="text" id="carPD" value="軍H-20378">
@@ -73,26 +77,26 @@
             <span id="labelPD1" class="time-tag" style="display:none;">16前</span>
             <label>車長</label><select id="ldPD1" onchange="upP('ldPD1','PD1LP')"></select><input type="text" id="PD1LP" readonly class="readonly-input">
             <label>駕駛</label><select id="drPD1" onchange="upP('drPD1','PD1DP')"></select><input type="text" id="PD1DP" readonly class="readonly-input">
-            <label class="chk-box" style="color:#5f6368;margin-top:5px;"><input type="checkbox" onchange="toggleExtra(this, 'extraPD1')"> 隨車人員</label>
-            <div id="extraPD1" style="display:none;"><select id="exPD1" onchange="upP('exPD1','PD1EP')"></select><input type="text" id="PD1EP" readonly class="readonly-input"></div>
+            <label class="chk-group" style="color:#5f6368;margin-top:8px;"><input type="checkbox" onchange="toggleExtra(this, 'extraPD1')"> 有隨車人員</label>
+            <div id="extraPD1" style="display:none;margin-top:5px;"><select id="exPD1" onchange="upP('exPD1','PD1EP')"></select><input type="text" id="PD1EP" readonly class="readonly-input"></div>
         </div>
         <div id="gPD2" class="sub-group" style="display:none;">
             <span id="labelPD2" class="time-tag">16後</span>
             <label>車長</label><select id="ldPD2" onchange="upP('ldPD2','PD2LP')"></select><input type="text" id="PD2LP" readonly class="readonly-input">
             <label>駕駛</label><select id="drPD2" onchange="upP('drPD2','PD2DP')"></select><input type="text" id="PD2DP" readonly class="readonly-input">
-            <label class="chk-box" style="color:#5f6368;margin-top:5px;"><input type="checkbox" onchange="toggleExtra(this, 'extraPD2')"> 隨車人員</label>
-            <div id="extraPD2" style="display:none;"><select id="exPD2" onchange="upP('exPD2','PD2EP')"></select><input type="text" id="PD2EP" readonly class="readonly-input"></div>
+            <label class="chk-group" style="color:#5f6368;margin-top:8px;"><input type="checkbox" onchange="toggleExtra(this, 'extraPD2')"> 有隨車人員</label>
+            <div id="extraPD2" style="display:none;margin-top:5px;"><select id="exPD2" onchange="upP('exPD2','PD2EP')"></select><input type="text" id="PD2EP" readonly class="readonly-input"></div>
         </div>
     </div>
 
     <div class="section" style="border-left-color: #9b59b6;">
         <div class="section-title">
             <span>📍 嵩山營區</span>
-            <div style="display:flex;gap:5px;align-items:center;">
+            <div style="display:flex;gap:8px;align-items:center;">
                 <select id="timeSS" class="time-select-mini" onchange="uL('SS')">
                     <option value="07">07:00</option><option value="0730">07:30</option><option value="08">08:00</option><option value="12">12:00</option><option value="16" selected>16:00</option><option value="18">18:00</option>
                 </select>
-                <label class="chk-box"><input type="checkbox" id="sSS" onchange="tS('SS')"> 交接</label>
+                <label class="chk-group"><input type="checkbox" id="sSS" onchange="tS('SS')"> 交接</label>
             </div>
         </div>
         <label>救護車車號</label><input type="text" id="carSS" value="軍H-60142">
@@ -100,15 +104,15 @@
             <span id="labelSS1" class="time-tag" style="display:none;">16前</span>
             <label>車長</label><select id="ldSS1" onchange="upP('ldSS1','SS1LP')"></select><input type="text" id="SS1LP" readonly class="readonly-input">
             <label>駕駛</label><select id="drSS1" onchange="upP('drSS1','SS1DP')"></select><input type="text" id="SS1DP" readonly class="readonly-input">
-            <label class="chk-box" style="color:#5f6368;margin-top:5px;"><input type="checkbox" onchange="toggleExtra(this, 'extraSS1')"> 隨車人員</label>
-            <div id="extraSS1" style="display:none;"><select id="exSS1" onchange="upP('exSS1','SS1EP')"></select><input type="text" id="SS1EP" readonly class="readonly-input"></div>
+            <label class="chk-group" style="color:#5f6368;margin-top:8px;"><input type="checkbox" onchange="toggleExtra(this, 'extraSS1')"> 有隨車人員</label>
+            <div id="extraSS1" style="display:none;margin-top:5px;"><select id="exSS1" onchange="upP('exSS1','SS1EP')"></select><input type="text" id="SS1EP" readonly class="readonly-input"></div>
         </div>
         <div id="gSS2" class="sub-group" style="display:none;">
             <span id="labelSS2" class="time-tag">16後</span>
             <label>車長</label><select id="ldSS2" onchange="upP('ldSS2','SS2LP')"></select><input type="text" id="SS2LP" readonly class="readonly-input">
             <label>駕駛</label><select id="drSS2" onchange="upP('drSS2','SS2DP')"></select><input type="text" id="SS2DP" readonly class="readonly-input">
-            <label class="chk-box" style="color:#5f6368;margin-top:5px;"><input type="checkbox" onchange="toggleExtra(this, 'extraSS2')"> 隨車人員</label>
-            <div id="extraSS2" style="display:none;"><select id="exSS2" onchange="upP('exSS2','SS2EP')"></select><input type="text" id="SS2EP" readonly class="readonly-input"></div>
+            <label class="chk-group" style="color:#5f6368;margin-top:8px;"><input type="checkbox" onchange="toggleExtra(this, 'extraSS2')"> 有隨車人員</label>
+            <div id="extraSS2" style="display:none;margin-top:5px;"><select id="exSS2" onchange="upP('exSS2','SS2EP')"></select><input type="text" id="SS2EP" readonly class="readonly-input"></div>
         </div>
     </div>
 
@@ -153,7 +157,7 @@ const defaultData = {
     ]
 };
 
-let db = JSON.parse(localStorage.getItem('ems_pingding_v594')) || JSON.parse(JSON.stringify(defaultData));
+let db = JSON.parse(localStorage.getItem('ems_pingding_v595')) || JSON.parse(JSON.stringify(defaultData));
 
 function adaptFields() {
     const t = document.getElementById('newType').value;
@@ -183,8 +187,8 @@ function toggleExtra(chk, id) { document.getElementById(id).style.display = chk.
 function upP(s, p) { document.getElementById(p).value = document.getElementById(s).options[document.getElementById(s).selectedIndex].dataset.phone || ""; }
 function formatPhone(el) { let v = el.value.replace(/\D/g, ''); if (v.length > 4) v = v.slice(0, 4) + '-' + v.slice(4, 10); el.value = v; }
 function toggleAdmin() { const p = document.getElementById('adminPanel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; adaptFields(); }
-function saveDB() { localStorage.setItem('ems_pingding_v594', JSON.stringify(db)); initApp(); }
-function resetToDefault() { if(confirm('確定恢復預設名單？')) { db = JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
+function saveDB() { localStorage.setItem('ems_pingding_v595', JSON.stringify(db)); initApp(); }
+function resetToDefault() { if(confirm('重設？')) { db = JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
 
 function addNewContact() {
     const t = document.getElementById('newType').value; const n = document.getElementById('newName').value;
@@ -218,18 +222,14 @@ function uDuty() {
 
 function getAmbu(id, car, isSplit, time) {
     const getVal = (suffix) => {
-        const sel = document.getElementById(suffix);
-        const name = sel.value;
-        const phone = document.getElementById(suffix.replace('ld','').replace('dr','').replace('ex','') + (suffix.includes('ld')?'LP':suffix.includes('dr')?'DP':'EP')).value;
-        const extraChk = document.getElementById('extra'+suffix.slice(-3)) ? document.getElementById('extra'+suffix.slice(-3)).style.display === 'block' : false;
-        let res = `車長：${name}\n${phone}\n駕駛：${document.getElementById('dr'+suffix.slice(-3)).value}\n${document.getElementById(suffix.slice(-3)+'DP').value}`;
-        if(document.getElementById('extra'+suffix.slice(-3)).style.display === 'block') {
-            res += `\n隨車：${document.getElementById('ex'+suffix.slice(-3)).value}\n${document.getElementById(suffix.slice(-3)+'EP').value}`;
+        const resPart = `車長：${document.getElementById('ld'+suffix).value}\n${document.getElementById(suffix+'LP').value}\n駕駛：${document.getElementById('dr'+suffix).value}\n${document.getElementById(suffix+'DP').value}`;
+        if(document.getElementById('extra'+suffix).style.display === 'block') {
+            return resPart + `\n隨車：${document.getElementById('ex'+suffix).value}\n${document.getElementById(suffix+'EP').value}`;
         }
-        return res;
+        return resPart;
     };
-    let res = `\n${isSplit ? time + '前\n' : ''}車號：${car}\n${getVal('ld'+id+'1')}`;
-    if(isSplit) res += `\n\n${time}後\n車號：${car}\n${getVal('ld'+id+'2')}`;
+    let res = `\n${isSplit ? time + '前\n' : ''}車號：${car}\n${getVal(id+'1')}`;
+    if(isSplit) res += `\n\n${time}後\n車號：${car}\n${getVal(id+'2')}`;
     return res;
 }
 
