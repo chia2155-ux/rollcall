@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>仁美救護編組產生器 v5.9.6</title>
+    <title>仁美救護編組產生器 v5.9.7</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 10px; background-color: #f0f2f5; line-height: 1.4; }
         .container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -30,7 +30,7 @@
 <body>
 
 <div class="container">
-    <h2>🚑 救護編組產生器-仁美 (v5.9.6)</h2>
+    <h2>🚑 救護編組產生器-仁美 (v5.9.7)</h2>
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理 / 同步名單</button>
 
     <div id="adminPanel" class="admin-panel">
@@ -44,14 +44,18 @@
         </select>
         
         <label>2. 單位 / 職稱</label>
-        <div id="unitInputArea">
-            <input type="text" id="newUnitText" placeholder="輸入單位">
-        </div>
-        
+        <div id="unitInputArea"><input type="text" id="newUnitText" placeholder="輸入單位"></div>
         <input type="text" id="newRank" placeholder="階級 (中校/上士...)">
         <input type="text" id="newName" placeholder="姓名">
         <input type="tel" id="newPhone" placeholder="手機 (例: 0912-123456)" oninput="formatPhone(this)" maxlength="11">
         <button onclick="addNewContact()" style="background:#27ae60; padding: 10px; font-size: 16px;">確認新增</button>
+        
+        <hr>
+        <span class="section-title">📲 同步備份</span>
+        <button onclick="exportData()" style="background:#6c757d; font-size:12px; padding:5px; margin-bottom:5px;">複製我的名單 (匯出代碼)</button>
+        <textarea id="syncData" placeholder="在此貼上匯入代碼..." style="height:45px; font-size:12px;"></textarea>
+        <button onclick="importData()" style="background:#17a2b8; font-size:12px; padding:5px;">匯入名單</button>
+        
         <hr>
         <div class="collapse-btn" onclick="toggleCollapse('listFull')">📂 查看完整名單 <span id="listFullIcon">▼</span></div>
         <div id="listFull" class="collapse-content"></div>
@@ -79,20 +83,8 @@
 </div>
 
 <script>
-const timeOptions = [
-    {v:'07',t:'07:00'},{v:'07:30',t:'07:30'},{v:'08',t:'08:00'},{v:'12',t:'12:00'},
-    {v:'13',t:'13:00'},{v:'15',t:'15:00'},{v:'16',t:'16:00'},{v:'17',t:'17:00'},
-    {v:'18',t:'18:00'},{v:'20',t:'20:00'}
-];
-
-const unitPresets = {
-    RM: ["砲二營", "砲三營", "無人機", "本部連"],
-    KT: ["砲一營"],
-    PD: ["防空營"],
-    SS: ["防空暨飛彈指揮部"],
-    WJ: ["三三三旅"]
-};
-
+const timeOptions = [{v:'07',t:'07:00'},{v:'07:30',t:'07:30'},{v:'08',t:'08:00'},{v:'12',t:'12:00'},{v:'13',t:'13:00'},{v:'15',t:'15:00'},{v:'16',t:'16:00'},{v:'17',t:'17:00'},{v:'18',t:'18:00'},{v:'20',t:'20:00'}];
+const unitPresets = { RM:["砲二營","砲三營","無人機","本部連"], KT:["砲一營"], PD:["防空營"], SS:["防空暨飛彈指揮部"], WJ:["三三三旅"] };
 const defaultData = {
     RM: [{u:"砲三營",r:"下士",n:"徐約愛",p:"0952-724412"}],
     KT: [{u:"飛彈連",r:"中士",n:"陳胤仰",p:"0972-848100"}],
@@ -102,189 +94,100 @@ const defaultData = {
     DutyRM: [{t:"經理官中尉",n:"蔡金翰"}], DutyKT: [{t:"觀通組長中尉",n:"林榆恩"}], DutyPD: [{t:"情報官中尉",n:"陳家俊"}],
     OS: [{t:"火協組長",r:"中校",n:"林侑聖",p:"0980-660304"}], GQ: [{t:"副參謀主任",r:"中校",n:"凃統憲",p:"0933-994547"}]
 };
-
 const camps = {
     RM:{n:'仁美營區',car:'軍H-20662',h:'國軍高雄總醫院🏥',d:'15-20',p:'07-7496591轉7496751',t:'16'},
-    KT:{n:'考潭營區',car:'軍H-20665',h:'高雄長庚醫院🏥',d:'5-10',p:'07-7317123轉2117(內科)、3377(外科)',t:'16'},
+    KT:{n:'考潭營區',car:'軍H-20665',h:'高雄長庚醫院🏥',d:'5-10',p:'07-7317123轉2117（內科）、3377（外科）',t:'16'},
     PD:{n:'坪頂營區',car:'軍H-20378',h:'高雄小港醫院🏥',d:'7',p:'07-8036783',t:'16'},
     SS:{n:'嵩山營區',car:'軍H-60142',h:'高雄旗山醫院🏥',d:'10-15',p:'07-6613811',t:'16'},
     WJ:{n:'萬金營區',car:'軍H-21049',h:'龍泉榮民醫院🏥',d:'20-25',p:'08-7704115',t:'16'}
 };
 
-let db = JSON.parse(localStorage.getItem('ems_renmei_v596')) || JSON.parse(JSON.stringify(defaultData));
+let db = JSON.parse(localStorage.getItem('ems_renmei_v597')) || JSON.parse(JSON.stringify(defaultData));
 
 function buildUI() {
     Object.keys(camps).forEach(id => {
         let tsH = timeOptions.map(o=>`<option value="${o.v}" ${o.v===camps[id].t?'selected':''}>${o.t}</option>`).join('');
         document.getElementById('ambu'+id).innerHTML = `
-            <div class="section-title"><span>📍 ${camps[id].n}</span>
-                <div style="display:flex;gap:5px;align-items:center;">
-                    <select id="t${id}" class="time-select-mini" onchange="uL('${id}')">${tsH}</select>
-                    <label style="font-size:11px;color:#d93025;"><input type="checkbox" id="s${id}" onchange="tS('${id}')"> 交接</label>
-                </div>
-            </div>
+            <div class="section-title"><span>📍 ${camps[id].n}</span><div style="display:flex;gap:5px;align-items:center;"><select id="t${id}" class="time-select-mini" onchange="uL('${id}')">${tsH}</select><label style="font-size:11px;color:#d93025;"><input type="checkbox" id="s${id}" onchange="tS('${id}')"> 交接</label></div></div>
             <label>車號</label><input type="text" id="car${id}" value="${camps[id].car}">
-            
-            <div class="sub-group">
-                <span id="l${id}1" class="time-tag" style="display:none;">16前</span>
-                <label>車長</label><select id="ld${id}1" onchange="upP('ld${id}1','${id}1LP')"></select><input type="text" id="${id}1LP" readonly class="readonly-input">
+            <div class="sub-group"><span id="l${id}1" class="time-tag" style="display:none;">16前</span><label>車長</label><select id="ld${id}1" onchange="upP('ld${id}1','${id}1LP')"></select><input type="text" id="${id}1LP" readonly class="readonly-input">
                 <label>駕駛</label><select id="dr${id}1" onchange="upP('dr${id}1','${id}1DP')"></select><input type="text" id="${id}1DP" readonly class="readonly-input">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;">
-                    <label style="margin:0;">隨車人員</label>
-                    <label class="medic-toggle"><input type="checkbox" id="m${id}1" onchange="toggleMedic('${id}1')"> 啟用隨車</label>
-                </div>
-                <div id="boxM${id}1" style="display:none; margin-top:5px;">
-                    <select id="me${id}1" onchange="upP('me${id}1','${id}1MP')"></select><input type="text" id="${id}1MP" readonly class="readonly-input">
-                </div>
-            </div>
-
-            <div id="g${id}2" class="sub-group" style="display:none;">
-                <span id="l${id}2" class="time-tag">16後</span>
-                <label>車長</label><select id="ld${id}2" onchange="upP('ld${id}2','${id}2LP')"></select><input type="text" id="${id}2LP" readonly class="readonly-input">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;"><label style="margin:0;">隨車人員</label><label class="medic-toggle"><input type="checkbox" id="m${id}1" onchange="toggleMedic('${id}1')"> 啟用隨車</label></div>
+                <div id="boxM${id}1" style="display:none; margin-top:5px;"><select id="me${id}1" onchange="upP('me${id}1','${id}1MP')"></select><input type="text" id="${id}1MP" readonly class="readonly-input"></div></div>
+            <div id="g${id}2" class="sub-group" style="display:none;"><span id="l${id}2" class="time-tag">16後</span><label>車長</label><select id="ld${id}2" onchange="upP('ld${id}2','${id}2LP')"></select><input type="text" id="${id}2LP" readonly class="readonly-input">
                 <label>駕駛</label><select id="dr${id}2" onchange="upP('dr${id}2','${id}2DP')"></select><input type="text" id="${id}2DP" readonly class="readonly-input">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;">
-                    <label style="margin:0;">隨車人員</label>
-                    <label class="medic-toggle"><input type="checkbox" id="m${id}2" onchange="toggleMedic('${id}2')"> 啟用隨車</label>
-                </div>
-                <div id="boxM${id}2" style="display:none; margin-top:5px;">
-                    <select id="me${id}2" onchange="upP('me${id}2','${id}2MP')"></select><input type="text" id="${id}2MP" readonly class="readonly-input">
-                </div>
-            </div>`;
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;"><label style="margin:0;">隨車人員</label><label class="medic-toggle"><input type="checkbox" id="m${id}2" onchange="toggleMedic('${id}2')"> 啟用隨車</label></div>
+                <div id="boxM${id}2" style="display:none; margin-top:5px;"><select id="me${id}2" onchange="upP('me${id}2','${id}2MP')"></select><input type="text" id="${id}2MP" readonly class="readonly-input"></div></div>`;
     });
     [['OS','總值星官','12'],['GQ','高勤官','18']].forEach(a => {
         let tsH = timeOptions.map(o=>`<option value="${o.v}" ${o.v===a[2]?'selected':''}>${o.t}</option>`).join('');
-        document.getElementById('sec'+a[0]).innerHTML = `
-            <div class="section-title"><span>☎️ ${a[1]}</span><label style="font-size:11px;"><input type="checkbox" id="s${a[0]}" onchange="tS('${a[0]}')"> 交接</label></div>
-            <select id="t${a[0]}" class="time-select-mini" onchange="uL('${a[0]}')">${tsH}</select>
-            <div class="sub-group"><span id="l${a[0]}1" class="time-tag" style="display:none;">${a[2]}前</span><select id="sel${a[0]}1" onchange="upP('sel${a[0]}1','${a[0]}1P')"></select><input type="text" id="${a[0]}1P" readonly class="readonly-input"></div>
-            <div id="g${a[0]}2" class="sub-group" style="display:none;"><span id="l${a[0]}2" class="time-tag">${a[2]}後</span><select id="sel${a[0]}2" onchange="upP('sel${a[0]}2','${a[0]}2P')"></select><input type="text" id="${a[0]}2P" readonly class="readonly-input"></div>`;
+        document.getElementById('sec'+a[0]).innerHTML = `<div class="section-title"><span>☎️ ${a[1]}</span><label style="font-size:11px;"><input type="checkbox" id="s${a[0]}" onchange="tS('${a[0]}')"> 交接</label></div><select id="t${a[0]}" class="time-select-mini" onchange="uL('${a[0]}')">${tsH}</select><div class="sub-group"><span id="l${a[0]}1" class="time-tag" style="display:none;">${a[2]}前</span><select id="sel${a[0]}1" onchange="upP('sel${a[0]}1','${a[0]}1P')"></select><input type="text" id="${a[0]}1P" readonly class="readonly-input"></div><div id="g${a[0]}2" class="sub-group" style="display:none;"><span id="l${a[0]}2" class="time-tag">${a[2]}後</span><select id="sel${a[0]}2" onchange="upP('sel${a[0]}2','${a[0]}2P')"></select><input type="text" id="${a[0]}2P" readonly class="readonly-input"></div>`;
     });
 }
 
 function adaptFields(){
-    const type = document.getElementById('newType').value;
-    const isDuty = type.startsWith('Duty');
-    const area = document.getElementById('unitInputArea');
-    document.getElementById('newRank').style.display = isDuty ? 'none' : 'block';
-
-    if (unitPresets[type]) {
-        let options = unitPresets[type].map(u => `<option value="${u}">${u}</option>`).join('');
-        area.innerHTML = `<select id="newUnitSel">${options}<option value="CUSTOM">-- 手動輸入 --</option></select>
-                          <input type="text" id="newUnitText" style="display:none; margin-top:5px;" placeholder="請輸入單位">`;
-        document.getElementById('newUnitSel').onchange = function() {
-            document.getElementById('newUnitText').style.display = (this.value === 'CUSTOM') ? 'block' : 'none';
-        };
-    } else {
-        area.innerHTML = `<input type="text" id="newUnitText" placeholder="${isDuty ? '級職 (例: 情報官中尉)' : '單位 / 職稱'}">`;
-    }
+    const t = document.getElementById('newType').value; const isD = t.startsWith('Duty'); const area = document.getElementById('unitInputArea');
+    document.getElementById('newRank').style.display = isD ? 'none' : 'block';
+    if (unitPresets[t]) {
+        area.innerHTML = `<select id="newUnitSel">${unitPresets[t].map(u=>`<option value="${u}">${u}</option>`).join('')}<option value="CUSTOM">-- 手動輸入 --</option></select><input type="text" id="newUnitText" style="display:none; margin-top:5px;" placeholder="請輸入單位">`;
+        document.getElementById('newUnitSel').onchange = function() { document.getElementById('newUnitText').style.display = (this.value === 'CUSTOM') ? 'block' : 'none'; };
+    } else { area.innerHTML = `<input type="text" id="newUnitText" placeholder="${isD ? '級職' : '單位 / 職稱'}">`; }
 }
-
-function toggleMedic(key) {
-    document.getElementById('boxM' + key).style.display = document.getElementById('m' + key).checked ? 'block' : 'none';
-}
-
-function tS(k){
-    const s = document.getElementById('s'+k).checked;
-    if(document.getElementById('g'+k+'2')) document.getElementById('g'+k+'2').style.display = s?'block':'none';
-    if(document.getElementById('l'+k+'1')) document.getElementById('l'+k+'1').style.display = s?'inline-block':'none';
-    if(document.getElementById('t'+k)) document.getElementById('t'+k).style.display = s?'inline-block':'none';
-    uL(k);
-}
-function uL(k){
-    const v = document.getElementById('t'+k).value;
-    if(document.getElementById('l'+k+'1')) document.getElementById('l'+k+'1').innerText = v+"前";
-    if(document.getElementById('l'+k+'2')) document.getElementById('l'+k+'2').innerText = v+"後";
-}
+function toggleMedic(k) { document.getElementById('boxM' + k).style.display = document.getElementById('m' + k).checked ? 'block' : 'none'; }
+function tS(k){ const s = document.getElementById('s'+k).checked; if(document.getElementById('g'+k+'2')) document.getElementById('g'+k+'2').style.display = s?'block':'none'; if(document.getElementById('l'+k+'1')) document.getElementById('l'+k+'1').style.display = s?'inline-block':'none'; if(document.getElementById('t'+k)) document.getElementById('t'+k).style.display = s?'inline-block':'none'; uL(k); }
+function uL(k){ const v = document.getElementById('t'+k).value; if(document.getElementById('l'+k+'1')) document.getElementById('l'+k+'1').innerText = v+"前"; if(document.getElementById('l'+k+'2')) document.getElementById('l'+k+'2').innerText = v+"後"; }
 function upP(s,p){ document.getElementById(p).value = document.getElementById(s).options[document.getElementById(s).selectedIndex].dataset.phone || ""; }
 
 function initApp() {
-    buildUI();
-    const now = new Date();
-    document.getElementById('reportDate').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    
+    buildUI(); const now = new Date(); document.getElementById('reportDate').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const fill = (id, list, m) => {
-        const el = document.getElementById(id); if(!el) return;
-        el.innerHTML = '<option value="">-- 請選擇 --</option>';
-        list.forEach(i => {
-            let txt = (m==='duty' || m==='off') ? ( (i.t||'') + (i.r||'') + i.n ) : (i.u + i.r + i.n);
-            el.innerHTML += `<option value="${txt}" data-phone="${i.p||''}">${txt}</option>`;
-        });
+        const el = document.getElementById(id); if(!el) return; el.innerHTML = '<option value="">-- 請選擇 --</option>';
+        list.forEach(i => { let txt = (m==='duty' || m==='off') ? ((i.t||'') + (i.r||'') + i.n) : (i.u + i.r + i.n); el.innerHTML += `<option value="${txt}" data-phone="${i.p||''}">${txt}</option>`; });
     };
     Object.keys(camps).forEach(id => { ['1','2'].forEach(x => { fill('ld'+id+x, db[id]); fill('dr'+id+x, db[id]); fill('me'+id+x, db[id]); }); });
     fill('selDutyRM', db.DutyRM, 'duty'); fill('selDutyKT', db.DutyKT, 'duty'); fill('selDutyPD', db.DutyPD, 'duty');
     ['1','2'].forEach(x => { fill('selOS'+x, db.OS, 'off'); fill('selGQ'+x, db.GQ, 'off'); });
-    renderAdminList();
-    adaptFields();
+    renderAdminList(); adaptFields();
 }
 
 function addNewContact(){
-    const t = document.getElementById('newType').value;
-    let u = document.getElementById('newUnitSel') ? (document.getElementById('newUnitSel').value === 'CUSTOM' ? document.getElementById('newUnitText').value : document.getElementById('newUnitSel').value) : document.getElementById('newUnitText').value;
-    const r = document.getElementById('newRank').value;
-    const n = document.getElementById('newName').value;
-    const p = document.getElementById('newPhone').value;
-    if(!n) return alert('姓名必填');
-    if(t.startsWith('Duty')) db[t].push({ t: u, n: n });
-    else if(t==='OS' || t==='GQ') db[t].push({ t: u, r: r, n: n, p: p });
-    else db[t].push({ u: u, r: r, n: n, p: p });
+    const t = document.getElementById('newType').value; let u = document.getElementById('newUnitSel') ? (document.getElementById('newUnitSel').value === 'CUSTOM' ? document.getElementById('newUnitText').value : document.getElementById('newUnitSel').value) : document.getElementById('newUnitText').value;
+    const r = document.getElementById('newRank').value; const n = document.getElementById('newName').value; const p = document.getElementById('newPhone').value;
+    if(!n) return alert('姓名必填'); if(t.startsWith('Duty')) db[t].push({ t: u, n: n }); else if(t==='OS' || t==='GQ') db[t].push({ t: u, r: r, n: n, p: p }); else db[t].push({ u: u, r: r, n: n, p: p });
     saveDB();
 }
-
 function renderAdminList() {
-    const div = document.getElementById('listFull'); div.innerHTML = '';
-    const keyMap = { RM:'仁美', KT:'考潭', PD:'坪頂', SS:'嵩山', WJ:'萬金', DutyRM:'戰情仁美', DutyKT:'戰情考潭', DutyPD:'戰情坪頂', OS:'總值星', GQ:'高勤' };
-    Object.keys(db).forEach(k => {
-        (db[k]||[]).forEach((p, i) => {
-            let txt = `[${keyMap[k] || k}] ` + (p.u||p.t||'') + (p.r||'') + p.n;
-            div.innerHTML += `<div class="contact-item"><span>${txt}</span><span class="del-btn" onclick="del('${k}',${i})">✕</span></div>`;
-        });
-    });
+    const div = document.getElementById('listFull'); div.innerHTML = ''; const keyMap = { RM:'仁美', KT:'考潭', PD:'坪頂', SS:'嵩山', WJ:'萬金', DutyRM:'戰情仁美', DutyKT:'戰情考潭', DutyPD:'戰情坪頂', OS:'總值星', GQ:'高勤' };
+    Object.keys(db).forEach(k => { (db[k]||[]).forEach((p, i) => { let txt = `[${keyMap[k] || k}] ` + (p.u||p.t||'') + (p.r||'') + p.n; div.innerHTML += `<div class="contact-item"><span>${txt}</span><span class="del-btn" onclick="del('${k}',${i})">✕</span></div>`; }); });
 }
-
 function formatPhone(el) { let v = el.value.replace(/\D/g,''); if(v.length>4) v = v.slice(0,4)+'-'+v.slice(4,10); el.value=v; }
 function toggleAdmin(){ const p=document.getElementById('adminPanel'); p.style.display=p.style.display==='block'?'none':'block'; }
 function toggleCollapse(id){ const c=document.getElementById(id); c.style.display=c.style.display==='block'?'none':'block'; }
-function saveDB(){ localStorage.setItem('ems_renmei_v596', JSON.stringify(db)); initApp(); }
+function saveDB(){ localStorage.setItem('ems_renmei_v597', JSON.stringify(db)); initApp(); }
 function resetToDefault(){ if(confirm('重設？')){ db=JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
 function del(k,i){ if(confirm('刪除？')){ db[k].splice(i,1); saveDB(); } }
+function exportData(){ const str = btoa(unescape(encodeURIComponent(JSON.stringify(db)))); navigator.clipboard.writeText(str).then(()=>alert('代碼已複製！')); }
+function importData(){ try { const d = JSON.parse(decodeURIComponent(escape(atob(document.getElementById('syncData').value.trim())))); if(confirm('匯入將覆蓋，確定？')){ db=d; saveDB(); alert('匯入成功！'); } } catch(e) { alert('代碼錯誤！'); } }
 
 function generateAndCopy() {
-    const dVal = document.getElementById('reportDate').value;
-    const dObj = new Date(dVal);
-    const dateStr = (dObj.getMonth()+1) + "月" + dObj.getDate() + "日";
-    const getV = (id) => document.getElementById(id).value;
-    
+    const dVal = document.getElementById('reportDate').value; const dObj = new Date(dVal); const dateStr = (dObj.getMonth()+1) + "月" + dObj.getDate() + "日";
     let res = `${dateStr}砲指部緊急傷病聯絡表：`;
     Object.keys(camps).forEach(id => {
-        const isS = document.getElementById('s'+id).checked; 
-        const t = getV('t'+id);
-        
-        // 第一段
-        res += `\n\n${camps[id].n}\n🚑救護車🚑\n${isS?t+'前\n':''}車號：${getV('car'+id)}\n車長：${getV('ld'+id+'1')}\n${document.getElementById(id+'1LP').value}\n駕駛：${getV('dr'+id+'1')}\n${document.getElementById(id+'1DP').value}`;
-        if(document.getElementById('m'+id+'1').checked) {
-            res += `\n隨車人員：${getV('me'+id+'1')}\n${document.getElementById(id+'1MP').value}`;
-        }
-
-        // 第二段
+        const isS = document.getElementById('s'+id).checked; const t = document.getElementById('t'+id).value;
+        res += `\n\n${camps[id].n}\n🚑救護車🚑\n${isS?t+'前\n':''}車號：${document.getElementById('car'+id).value}\n車長：${document.getElementById('ld'+id+'1').value}\n${document.getElementById(id+'1LP').value}\n駕駛：${document.getElementById('dr'+id+'1').value}\n${document.getElementById(id+'1DP').value}`;
+        if(document.getElementById('m'+id+'1').checked) res += `\n隨車人員：${document.getElementById('me'+id+'1').value}\n${document.getElementById(id+'1MP').value}`;
         if(isS) {
-            res += `\n\n${t}後\n車號：${getV('car'+id)}\n車長：${getV('ld'+id+'2')}\n${document.getElementById(id+'2LP').value}\n駕駛：${getV('dr'+id+'2')}\n${document.getElementById(id+'2DP').value}`;
-            if(document.getElementById('m'+id+'2').checked) {
-                res += `\n隨車人員：${getV('me'+id+'2')}\n${document.getElementById(id+'2MP').value}`;
-            }
+            res += `\n\n${t}後\n車號：${document.getElementById('car'+id).value}\n車長：${document.getElementById('ld'+id+'2').value}\n${document.getElementById(id+'2LP').value}\n駕駛：${document.getElementById('dr'+id+'2').value}\n${document.getElementById(id+'2DP').value}`;
+            if(document.getElementById('m'+id+'2').checked) res += `\n隨車人員：${document.getElementById('me'+id+'2').value}\n${document.getElementById(id+'2MP').value}`;
         }
         res += `\n\n區域醫院：${camps[id].h}\n後送路程：約${camps[id].d}分鐘\n聯絡電話：${camps[id].p}`;
     });
-
-    res += `\n\n☎️戰情官☎️\n仁美營區\n${getV('selDutyRM')}\n民線：07-6510338\n軍線：743900\n\n考潭營區\n${getV('selDutyKT')}\n民線：07-7355924\n軍線：743920\n\n坪頂營區\n${getV('selDutyPD')}\n民線：07-8913762\n軍線：712318`;
-    
+    res += `\n\n☎️戰情官☎️\n仁美營區\n${document.getElementById('selDutyRM').value}\n民線：07-6510338\n軍線：743900\n\n考潭營區\n${document.getElementById('selDutyKT').value}\n民線：07-7355924\n軍線：743920\n\n坪頂營區\n${document.getElementById('selDutyPD').value}\n民線：07-8913762\n軍線：712318`;
     [['OS','總值星官'],['GQ','高勤官']].forEach(a => {
-        const isS = document.getElementById('s'+a[0]).checked; const t = getV('t'+a[0]);
-        res += `\n\n☎️${a[1]}☎️`;
-        res += isS ? `\n${t}前\n${getV('sel'+a[0]+'1')}\n電話：${getV(a[0]+'1P')}\n\n${t}後\n${getV('sel'+a[0]+'2')}\n電話：${getV(a[0]+'2P')}` : `\n${getV('sel'+a[0]+'1')}\n電話：${getV(a[0]+'1P')}`;
+        const isS = document.getElementById('s'+a[0]).checked; const t = document.getElementById('t'+a[0]).value; res += `\n\n☎️${a[1]}☎️`;
+        res += isS ? `\n${t}前\n${document.getElementById('sel'+a[0]+'1').value}\n電話：${document.getElementById(a[0]+'1P').value}\n\n${t}後\n${document.getElementById('sel'+a[0]+'2').value}\n電話：${document.getElementById(a[0]+'2P').value}` : `\n${document.getElementById('sel'+a[0]+'1').value}\n電話：${document.getElementById(a[0]+'1P').value}`;
     });
-
-    const out = document.getElementById('result'); out.innerText = res; out.style.display = 'block';
-    navigator.clipboard.writeText(res).then(()=>alert("已生成並複製到剪貼簿！"));
+    const out = document.getElementById('result'); out.innerText = res; out.style.display = 'block'; navigator.clipboard.writeText(res).then(()=>alert("已生成並複製到剪貼簿！"));
 }
 initApp();
 </script>
