@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>仁美救護編組產生器 v5.9.5</title>
+    <title>仁美救護編組產生器 v5.9.6</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 10px; background-color: #f0f2f5; line-height: 1.4; }
         .container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -30,7 +30,7 @@
 <body>
 
 <div class="container">
-    <h2>🚑 救護編組產生器-仁美 (v5.9.5)</h2>
+    <h2>🚑 救護編組產生器-仁美 (v5.9.6)</h2>
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理 / 同步名單</button>
 
     <div id="adminPanel" class="admin-panel">
@@ -105,13 +105,13 @@ const defaultData = {
 
 const camps = {
     RM:{n:'仁美營區',car:'軍H-20662',h:'國軍高雄總醫院🏥',d:'15-20',p:'07-7496591轉7496751',t:'16'},
-    KT:{n:'考潭營區',car:'軍H-20665',h:'高雄長庚醫院🏥',d:'5-10',p:'07-7317123轉2117(內)/3377(外)',t:'16'},
+    KT:{n:'考潭營區',car:'軍H-20665',h:'高雄長庚醫院🏥',d:'5-10',p:'07-7317123轉2117（內科）、3377（外科）',t:'16'},
     PD:{n:'坪頂營區',car:'軍H-20378',h:'高雄小港醫院🏥',d:'7',p:'07-8036783',t:'16'},
     SS:{n:'嵩山營區',car:'軍H-60142',h:'高雄旗山醫院🏥',d:'10-15',p:'07-6613811',t:'16'},
     WJ:{n:'萬金營區',car:'軍H-21049',h:'龍泉榮民醫院🏥',d:'20-25',p:'08-7704115',t:'16'}
 };
 
-let db = JSON.parse(localStorage.getItem('ems_renmei_v595')) || JSON.parse(JSON.stringify(defaultData));
+let db = JSON.parse(localStorage.getItem('ems_renmei_v596')) || JSON.parse(JSON.stringify(defaultData));
 
 function buildUI() {
     Object.keys(camps).forEach(id => {
@@ -244,7 +244,7 @@ function renderAdminList() {
 function formatPhone(el) { let v = el.value.replace(/\D/g,''); if(v.length>4) v = v.slice(0,4)+'-'+v.slice(4,10); el.value=v; }
 function toggleAdmin(){ const p=document.getElementById('adminPanel'); p.style.display=p.style.display==='block'?'none':'block'; }
 function toggleCollapse(id){ const c=document.getElementById(id); c.style.display=c.style.display==='block'?'none':'block'; }
-function saveDB(){ localStorage.setItem('ems_renmei_v595', JSON.stringify(db)); initApp(); }
+function saveDB(){ localStorage.setItem('ems_renmei_v596', JSON.stringify(db)); initApp(); }
 function resetToDefault(){ if(confirm('重設？')){ db=JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
 function del(k,i){ if(confirm('刪除？')){ db[k].splice(i,1); saveDB(); } }
 
