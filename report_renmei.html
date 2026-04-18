@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>仁美救護編組產生器 v5.9.7</title>
+    <title>仁美救護編組產生器 v5.9.8</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 10px; background-color: #f0f2f5; line-height: 1.4; }
         .container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -30,7 +30,7 @@
 <body>
 
 <div class="container">
-    <h2>🚑 救護編組產生器-仁美 (v5.9.7)</h2>
+    <h2>🚑 救護編組產生器-仁美 (v5.9.8)</h2>
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理 / 同步名單</button>
 
     <div id="adminPanel" class="admin-panel">
@@ -102,7 +102,7 @@ const camps = {
     WJ:{n:'萬金營區',car:'軍H-21049',h:'龍泉榮民醫院🏥',d:'20-25',p:'08-7704115',t:'16'}
 };
 
-let db = JSON.parse(localStorage.getItem('ems_renmei_v597')) || JSON.parse(JSON.stringify(defaultData));
+let db = JSON.parse(localStorage.getItem('ems_renmei_v598')) || JSON.parse(JSON.stringify(defaultData));
 
 function buildUI() {
     Object.keys(camps).forEach(id => {
@@ -112,11 +112,11 @@ function buildUI() {
             <label>車號</label><input type="text" id="car${id}" value="${camps[id].car}">
             <div class="sub-group"><span id="l${id}1" class="time-tag" style="display:none;">16前</span><label>車長</label><select id="ld${id}1" onchange="upP('ld${id}1','${id}1LP')"></select><input type="text" id="${id}1LP" readonly class="readonly-input">
                 <label>駕駛</label><select id="dr${id}1" onchange="upP('dr${id}1','${id}1DP')"></select><input type="text" id="${id}1DP" readonly class="readonly-input">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;"><label style="margin:0;">隨車人員</label><label class="medic-toggle"><input type="checkbox" id="m${id}1" onchange="toggleMedic('${id}1')"> 啟用隨車</label></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;"><label style="margin:0;">隨車</label><label class="medic-toggle"><input type="checkbox" id="m${id}1" onchange="toggleMedic('${id}1')"> 啟用隨車</label></div>
                 <div id="boxM${id}1" style="display:none; margin-top:5px;"><select id="me${id}1" onchange="upP('me${id}1','${id}1MP')"></select><input type="text" id="${id}1MP" readonly class="readonly-input"></div></div>
             <div id="g${id}2" class="sub-group" style="display:none;"><span id="l${id}2" class="time-tag">16後</span><label>車長</label><select id="ld${id}2" onchange="upP('ld${id}2','${id}2LP')"></select><input type="text" id="${id}2LP" readonly class="readonly-input">
                 <label>駕駛</label><select id="dr${id}2" onchange="upP('dr${id}2','${id}2DP')"></select><input type="text" id="${id}2DP" readonly class="readonly-input">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;"><label style="margin:0;">隨車人員</label><label class="medic-toggle"><input type="checkbox" id="m${id}2" onchange="toggleMedic('${id}2')"> 啟用隨車</label></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;"><label style="margin:0;">隨車</label><label class="medic-toggle"><input type="checkbox" id="m${id}2" onchange="toggleMedic('${id}2')"> 啟用隨車</label></div>
                 <div id="boxM${id}2" style="display:none; margin-top:5px;"><select id="me${id}2" onchange="upP('me${id}2','${id}2MP')"></select><input type="text" id="${id}2MP" readonly class="readonly-input"></div></div>`;
     });
     [['OS','總值星官','12'],['GQ','高勤官','18']].forEach(a => {
@@ -163,7 +163,7 @@ function renderAdminList() {
 function formatPhone(el) { let v = el.value.replace(/\D/g,''); if(v.length>4) v = v.slice(0,4)+'-'+v.slice(4,10); el.value=v; }
 function toggleAdmin(){ const p=document.getElementById('adminPanel'); p.style.display=p.style.display==='block'?'none':'block'; }
 function toggleCollapse(id){ const c=document.getElementById(id); c.style.display=c.style.display==='block'?'none':'block'; }
-function saveDB(){ localStorage.setItem('ems_renmei_v597', JSON.stringify(db)); initApp(); }
+function saveDB(){ localStorage.setItem('ems_renmei_v598', JSON.stringify(db)); initApp(); }
 function resetToDefault(){ if(confirm('重設？')){ db=JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
 function del(k,i){ if(confirm('刪除？')){ db[k].splice(i,1); saveDB(); } }
 function exportData(){ const str = btoa(unescape(encodeURIComponent(JSON.stringify(db)))); navigator.clipboard.writeText(str).then(()=>alert('代碼已複製！')); }
@@ -175,10 +175,10 @@ function generateAndCopy() {
     Object.keys(camps).forEach(id => {
         const isS = document.getElementById('s'+id).checked; const t = document.getElementById('t'+id).value;
         res += `\n\n${camps[id].n}\n🚑救護車🚑\n${isS?t+'前\n':''}車號：${document.getElementById('car'+id).value}\n車長：${document.getElementById('ld'+id+'1').value}\n${document.getElementById(id+'1LP').value}\n駕駛：${document.getElementById('dr'+id+'1').value}\n${document.getElementById(id+'1DP').value}`;
-        if(document.getElementById('m'+id+'1').checked) res += `\n隨車人員：${document.getElementById('me'+id+'1').value}\n${document.getElementById(id+'1MP').value}`;
+        if(document.getElementById('m'+id+'1').checked) res += `\n隨車：${document.getElementById('me'+id+'1').value}\n${document.getElementById(id+'1MP').value}`;
         if(isS) {
             res += `\n\n${t}後\n車號：${document.getElementById('car'+id).value}\n車長：${document.getElementById('ld'+id+'2').value}\n${document.getElementById(id+'2LP').value}\n駕駛：${document.getElementById('dr'+id+'2').value}\n${document.getElementById(id+'2DP').value}`;
-            if(document.getElementById('m'+id+'2').checked) res += `\n隨車人員：${document.getElementById('me'+id+'2').value}\n${document.getElementById(id+'2MP').value}`;
+            if(document.getElementById('m'+id+'2').checked) res += `\n隨車：${document.getElementById('me'+id+'2').value}\n${document.getElementById(id+'2MP').value}`;
         }
         res += `\n\n區域醫院：${camps[id].h}\n後送路程：約${camps[id].d}分鐘\n聯絡電話：${camps[id].p}`;
     });
