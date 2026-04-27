@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚑 救護編組產生器-坪頂 (v5.9.5)</title>
+    <title>🚑 救護編組產生器-坪頂 (v5.9.7)</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 10px; background-color: #f0f2f5; line-height: 1.4; }
         .container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -19,12 +19,10 @@
         .admin-panel { display: none; background: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #1a73e8; }
         .contact-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin-top: 3px; border-radius: 4px; font-size: 13px; border: 1px solid #eee; }
         .del-btn { color: #d93025; cursor: pointer; font-weight: bold; padding: 2px 8px; }
+        .sync-box { background: #fff; padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px solid #ccc; }
         .readonly-input { background-color: #e9ecef; color: #495057; }
-        
-        /* 修正勾選框排列 */
         .chk-group { display: flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 12px; color: #d93025; cursor: pointer; }
         .chk-group input { width: 16px; height: 16px; margin: 0; cursor: pointer; }
-        
         .time-select-mini { width: auto; font-size: 11px; padding: 1px; height: 24px; margin: 0; display: none; }
         #result { white-space: pre-wrap; background: #fffbe6; padding: 15px; border: 1px solid #ffe58f; margin-top: 20px; font-size: 14px; display: none; border-radius: 8px; color: #333; }
     </style>
@@ -32,7 +30,7 @@
 <body>
 
 <div class="container">
-    <h2>🚑 救護編組產生器-坪頂 <span style="font-size: 12px; color: #888;">v5.9.5</span></h2>
+    <h2>🚑 救護編組產生器-坪頂 <span style="font-size: 12px; color: #888;">v5.9.7</span></h2>
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理 / 同步名單</button>
 
     <div id="adminPanel" class="admin-panel">
@@ -52,9 +50,19 @@
         <input type="text" id="newName" placeholder="姓名">
         <input type="tel" id="newPhone" placeholder="手機" oninput="formatPhone(this)" maxlength="11">
         <button onclick="addNewContact()" style="background:#27ae60; padding: 10px; font-size: 16px;">確認新增</button>
+        
         <hr>
+        <span class="section-title">📲 同步與備份</span>
+        <div class="sync-box">
+            <button onclick="exportData()" style="background:#6c757d; font-size:12px; padding:5px; color:white; border:none; border-radius:4px;">1. 複製我的名單 (匯出代碼)</button>
+            <textarea id="syncData" placeholder="在此貼上別人的代碼..." style="margin-top:10px; font-size:12px; height:45px;"></textarea>
+            <button onclick="importData()" style="background:#17a2b8; font-size:12px; padding:5px; color:white; border:none; border-radius:4px;">2. 貼上並匯入名單</button>
+        </div>
+
+        <hr>
+        <span class="section-title">📂 目前名單</span>
         <div id="listFull"></div>
-        <button onclick="resetToDefault()" style="background:#d93025; font-size:12px; padding:5px; margin-top:15px;">重設回預設</button>
+        <button onclick="resetToDefault()" style="background:#d93025; font-size:12px; padding:5px; margin-top:15px; color:white; border:none; border-radius:4px;">⚠️ 重設回預設名單</button>
     </div>
     
     <div class="section">
@@ -112,7 +120,7 @@
             <label>車長</label><select id="ldSS2" onchange="upP('ldSS2','SS2LP')"></select><input type="text" id="SS2LP" readonly class="readonly-input">
             <label>駕駛</label><select id="drSS2" onchange="upP('drSS2','SS2DP')"></select><input type="text" id="SS2DP" readonly class="readonly-input">
             <label class="chk-group" style="color:#5f6368;margin-top:8px;"><input type="checkbox" onchange="toggleExtra(this, 'extraSS2')"> 有隨車人員</label>
-            <div id="extraSS2" style="display:none;margin-top:5px;"><select id="exSS2" onchange="upP('exSS2','SS2EP')"></select><input type="text" id="SS2EP" readonly class="readonly-input"></div>
+            <div id="extraSS2" style="display:none;margin-top:5px;"><select id="exSS2" onchange="upP('exSS2','SS2EP')"></select><input type="text" id="PD2EP" readonly class="readonly-input"></div>
         </div>
     </div>
 
@@ -157,7 +165,7 @@ const defaultData = {
     ]
 };
 
-let db = JSON.parse(localStorage.getItem('ems_pingding_v595')) || JSON.parse(JSON.stringify(defaultData));
+let db = JSON.parse(localStorage.getItem('ems_pingding_v597')) || JSON.parse(JSON.stringify(defaultData));
 
 function adaptFields() {
     const t = document.getElementById('newType').value;
@@ -186,16 +194,38 @@ function uL(k){
 function toggleExtra(chk, id) { document.getElementById(id).style.display = chk.checked ? 'block' : 'none'; }
 function upP(s, p) { document.getElementById(p).value = document.getElementById(s).options[document.getElementById(s).selectedIndex].dataset.phone || ""; }
 function formatPhone(el) { let v = el.value.replace(/\D/g, ''); if (v.length > 4) v = v.slice(0, 4) + '-' + v.slice(4, 10); el.value = v; }
-function toggleAdmin() { const p = document.getElementById('adminPanel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; adaptFields(); }
-function saveDB() { localStorage.setItem('ems_pingding_v595', JSON.stringify(db)); initApp(); }
-function resetToDefault() { if(confirm('重設？')) { db = JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
+function toggleAdmin() { const p = document.getElementById('adminPanel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; adaptFields(); renderAdminList(); }
+function saveDB() { localStorage.setItem('ems_pingding_v597', JSON.stringify(db)); initApp(); }
+function resetToDefault() { if(confirm('重設名單？')) { db = JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
 
 function addNewContact() {
     const t = document.getElementById('newType').value; const n = document.getElementById('newName').value;
     if(!n) return alert('姓名必填');
     if(t === 'Duty') db.Duty.push({ title: document.getElementById('newTitle').value, name: n });
     else db[t].push({ unit: document.getElementById('newUnit').value, rank: document.getElementById('newRank').value, name: n, phone: document.getElementById('newPhone').value });
-    saveDB();
+    saveDB(); alert('新增成功！');
+    ['newRank','newTitle','newName','newPhone'].forEach(id=>document.getElementById(id).value='');
+}
+
+function deleteContact(type, index) { if(confirm('刪除人員？')) { db[type].splice(index, 1); saveDB(); } }
+
+function renderAdminList() {
+    const div = document.getElementById('listFull'); div.innerHTML = '';
+    const keyMap = { PingDing:'坪頂', SongShan:'嵩山', Duty:'戰情' };
+    Object.keys(db).forEach(k => {
+        (db[k]||[]).forEach((p, i) => {
+            const displayName = p.unit ? (p.unit+p.rank+p.name) : (p.title+p.name);
+            div.innerHTML += `<div class="contact-item"><span>[${keyMap[k]||k}] ${displayName}</span><span class="del-btn" onclick="deleteContact('${k}', ${i})">✕</span></div>`;
+        });
+    });
+}
+
+function exportData() { navigator.clipboard.writeText(btoa(unescape(encodeURIComponent(JSON.stringify(db))))).then(() => alert('匯出成功，已複製代碼！')); }
+function importData() {
+    try {
+        const d = JSON.parse(decodeURIComponent(escape(atob(document.getElementById('syncData').value.trim()))));
+        if(confirm('匯入將覆蓋目前名單，確定？')) { db = d; saveDB(); alert('匯入成功！'); }
+    } catch(e) { alert('代碼錯誤！'); }
 }
 
 function initApp() {
@@ -220,29 +250,31 @@ function uDuty() {
     if(i!=="") document.getElementById('dutyName').value = db.Duty[i].title + db.Duty[i].name;
 }
 
-function getAmbu(id, car, isSplit, time) {
-    const getVal = (suffix) => {
-        const resPart = `車長：${document.getElementById('ld'+suffix).value}\n${document.getElementById(suffix+'LP').value}\n駕駛：${document.getElementById('dr'+suffix).value}\n${document.getElementById(suffix+'DP').value}`;
-        if(document.getElementById('extra'+suffix).style.display === 'block') {
-            return resPart + `\n隨車：${document.getElementById('ex'+suffix).value}\n${document.getElementById(suffix+'EP').value}`;
-        }
-        return resPart;
-    };
-    let res = `\n${isSplit ? time + '前\n' : ''}車號：${car}\n${getVal(id+'1')}`;
-    if(isSplit) res += `\n\n${time}後\n車號：${car}\n${getVal(id+'2')}`;
-    return res;
-}
-
 function generateAndCopy() {
     const d = new Date(document.getElementById('reportDate').value);
     const dateStr = (d.getMonth()+1) + "月" + d.getDate() + "日";
+    
+    const getAmbuText = (id, car, isSplit, time) => {
+        const getV = (suffix) => {
+            let res = `車長：${document.getElementById('ld'+suffix).value}\n${document.getElementById(suffix+'LP').value}\n駕駛：${document.getElementById('dr'+suffix).value}\n${document.getElementById(suffix+'DP').value}`;
+            if(document.getElementById('extra'+suffix).style.display === 'block') {
+                res += `\n隨車：${document.getElementById('ex'+suffix).value}\n${document.getElementById(suffix+'EP').value}`;
+            }
+            return res;
+        };
+        let res = `\n${isSplit ? time + '前\n' : ''}車號：${car}\n${getV(id+'1')}`;
+        if(isSplit) res += `\n\n${time}後\n車號：${car}\n${getV(id+'2')}`;
+        return res;
+    };
+
     let res = `${dateStr}砲指部緊急傷病聯絡表：\n\n坪頂營區\n🚑救護車🚑`;
-    res += getAmbu('PD', document.getElementById('carPD').value, document.getElementById('sPD').checked, document.getElementById('timePD').value);
+    res += getAmbuText('PD', document.getElementById('carPD').value, document.getElementById('sPD').checked, document.getElementById('timePD').value);
     res += `\n\n區域醫院：高雄小港醫院🏥\n後送路程：約7分鐘\n聯絡電話：07-8036783\n\n嵩山營區\n🚑救護車🚑`;
-    res += getAmbu('SS', document.getElementById('carSS').value, document.getElementById('sSS').checked, document.getElementById('timeSS').value);
+    res += getAmbuText('SS', document.getElementById('carSS').value, document.getElementById('sSS').checked, document.getElementById('timeSS').value);
     res += `\n\n區域醫院：高雄旗山醫院🏥\n後送路程：約10-15分鐘\n聯絡電話：07-6613811\n\n☎️戰情官☎️\n坪頂營區\n${document.getElementById('dutyName').value}\n民線：07-8913762\n軍線：712318`;
+
     const r = document.getElementById('result'); r.innerText = res; r.style.display = 'block';
-    navigator.clipboard.writeText(res).then(() => alert('已複製！'));
+    navigator.clipboard.writeText(res).then(() => alert('已生成並複製！'));
 }
 initApp();
 </script>
