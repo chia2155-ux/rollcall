@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚑 救護編組產生器-坪頂 (v5.9.10)</title>
+    <title>🚑 救護編組產生器-坪頂 (v5.9.11)</title>
+    <!-- 引入支援手機拖拉排序的套件 -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 10px; background-color: #f0f2f5; line-height: 1.4; }
         .container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -18,6 +20,8 @@
         .btn-admin { background-color: #5f6368; font-size: 14px; padding: 8px; margin-bottom: 15px; width: auto; display: block; margin-left: auto; color: white; border: none; border-radius: 4px; }
         .admin-panel { display: none; background: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #1a73e8; }
         .contact-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin-top: 3px; border-radius: 4px; font-size: 13px; border: 1px solid #eee; }
+        .drag-handle { cursor: grab; color: #999; padding: 0 8px; font-size: 16px; user-select: none; }
+        .drag-handle:active { cursor: grabbing; }
         .edit-btn { color: #1a73e8; cursor: pointer; font-weight: bold; padding: 2px 8px; margin-right: 5px; }
         .del-btn { color: #d93025; cursor: pointer; font-weight: bold; padding: 2px 8px; }
         .readonly-input { background-color: #e9ecef; color: #495057; }
@@ -37,7 +41,7 @@
 <body>
 
 <div class="container">
-    <h2>🚑 救護編組產生器-坪頂 <span style="font-size: 12px; color: #888;">v5.9.10</span></h2>
+    <h2>🚑 救護編組產生器-坪頂 <span style="font-size: 12px; color: #888;">v5.9.11</span></h2>
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理 / 同步名單</button>
 
     <div id="adminPanel" class="admin-panel">
@@ -63,15 +67,15 @@
         </div>
         
         <hr>
-        <span class="section-title">📲 備份與同步名單</span>
+        <span class="section-title">📲 同步與備份</span>
         <div style="background:#fff; padding:10px; border:1px solid #ccc; border-radius:8px;">
             <button onclick="exportData()" style="background:#17a2b8; font-size:12px; padding:6px; color:white; border:none; border-radius:4px; margin-bottom:5px;">📋 匯出我的名單 (複製代碼)</button>
-            <textarea id="syncData" placeholder="在此貼上匯入代碼..." style="margin-top:5px; font-size:12px; height:45px;"></textarea>
+            <textarea id="syncData" placeholder="貼上代碼..." style="margin-top:5px; font-size:12px; height:45px;"></textarea>
             <button onclick="importData()" style="background:#5f6368; font-size:12px; padding:6px; color:white; border:none; border-radius:4px;">📥 匯入名單 (蓋掉舊名單)</button>
         </div>
 
         <hr>
-        <span class="section-title">📂 目前名單</span>
+        <span class="section-title">📂 目前名單 (按住 ☰ 可拖曳排序)</span>
         <div id="listFull"></div>
         <button onclick="resetToDefault()" style="background:#d93025; font-size:12px; padding:5px; margin-top:15px; color:white; border:none; border-radius:4px;">⚠️ 重設回預設</button>
     </div>
@@ -158,7 +162,7 @@ const defaultData = {
     Duty: [ { title: "情報官中尉", name: "陳家俊" }, { title: "飛技官中尉", name: "洪星瑋" }, { title: "作訓官中尉", name: "張晉愷" }, { title: "通信官中尉", name: "王蔚" }, { title: "後勤官中尉", name: "鄭家澄" }, { title: "訓練官中尉", name: "楊善宭" } ]
 };
 
-let db = JSON.parse(localStorage.getItem('ems_pingding_v5910')) || JSON.parse(JSON.stringify(defaultData));
+let db = JSON.parse(localStorage.getItem('ems_pingding_v5911')) || JSON.parse(JSON.stringify(defaultData));
 
 function adaptFields() {
     const t = document.getElementById('newType').value;
@@ -177,7 +181,7 @@ function toggleExtra(chk, id) { document.getElementById(id).style.display = chk.
 function upP(s, p) { document.getElementById(p).value = document.getElementById(s).options[document.getElementById(s).selectedIndex].dataset.phone || ""; }
 function formatPhone(el) { let v = el.value.replace(/\D/g, ''); if (v.length > 4) v = v.slice(0, 4) + '-' + v.slice(4, 10); el.value = v; }
 function toggleAdmin() { const p = document.getElementById('adminPanel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; adaptFields(); renderAdminList(); }
-function saveDB() { localStorage.setItem('ems_pingding_v5910', JSON.stringify(db)); initApp(); }
+function saveDB() { localStorage.setItem('ems_pingding_v5911', JSON.stringify(db)); initApp(); }
 function resetToDefault() { if(confirm('確定重設名單？')) { db = JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
 
 function saveContact() {
@@ -203,16 +207,13 @@ function editContact(t, i) {
     else { document.getElementById('newUnit').value = p.unit; document.getElementById('newRank').value = p.rank; document.getElementById('newPhone').value = p.phone; }
     document.getElementById('newName').value = p.name;
     
-    // UI 變更為編輯狀態
     document.getElementById('btnAction').innerText = '儲存修改';
     document.getElementById('btnCancel').style.display = 'block';
     document.getElementById('adminTitle').innerText = '✏️ 編輯人員';
     document.getElementById('adminTitle').style.color = '#1a73e8';
 
-    // 🌟 自動平滑滾動到最上方的新增/編輯區塊
     document.getElementById('adminTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-    // 🌟 閃爍高亮動畫提示
     const flashList = ['newName', 'newPhone', 'newRank', 'newTitle'];
     flashList.forEach(id => {
         const el = document.getElementById(id);
@@ -237,17 +238,56 @@ function deleteContact(type, index) { if(confirm('確定刪除？')) { db[type].
 function renderAdminList() {
     const div = document.getElementById('listFull'); div.innerHTML = '';
     const keyMap = { PingDing:'坪頂', SongShan:'嵩山', Duty:'戰情' };
+    
     Object.keys(db).forEach(k => {
+        if(!db[k] || db[k].length === 0) return;
+        
+        // 為每個分類建立一個可拖曳的子容器
+        let subContainerId = `sortable-${k}`;
+        let sectionHeader = `<div style="font-weight:bold; font-size:12px; color:#1a73e8; margin-top:10px; margin-bottom:4px; padding-left:8px;">📌 ${keyMap[k]||k}營區</div>`;
+        let subContainer = `<div id="${subContainerId}"></div>`;
+        
+        div.innerHTML += sectionHeader + subContainer;
+        
+        const subDiv = document.getElementById(subContainerId);
         (db[k]||[]).forEach((p, i) => {
             const displayName = p.unit ? (p.unit+p.rank+p.name) : (p.title+p.name);
-            div.innerHTML += `<div class="contact-item"><span>[${keyMap[k]||k}] ${displayName}</span>
-                <div><span class="edit-btn" onclick="editContact('${k}', ${i})">✏️</span><span class="del-btn" onclick="deleteContact('${k}', ${i})">✕</span></div></div>`;
+            subDiv.innerHTML += `
+                <div class="contact-item" data-index="${i}" data-type="${k}">
+                    <div style="display:flex; align-items:center;">
+                        <span class="drag-handle">☰</span>
+                        <span>${displayName}</span>
+                    </div>
+                    <div>
+                        <span class="edit-btn" onclick="editContact('${k}', ${i})">✏️</span>
+                        <span class="del-btn" onclick="deleteContact('${k}', ${i})">✕</span>
+                    </div>
+                </div>`;
+        });
+        
+        // 綁定拖曳套件 (Sortable.js)
+        new Sortable(subDiv, {
+            handle: '.drag-handle',
+            animation: 150,
+            onEnd: function (evt) {
+                const type = k;
+                const oldIndex = evt.oldIndex;
+                const newIndex = evt.newIndex;
+                
+                // 重新調整陣列內部的順序
+                const movedItem = db[type].splice(oldIndex, 1)[0];
+                db[type].splice(newIndex, 0, movedItem);
+                
+                // 儲存並即時更新全域選單
+                localStorage.setItem('ems_pingding_v5911', JSON.stringify(db));
+                initApp();
+            }
         });
     });
 }
 
-function exportData() { navigator.clipboard.writeText(btoa(unescape(encodeURIComponent(JSON.stringify(db))))).then(() => alert('匯出成功，已複製代碼！')); }
-function importData() { try { const d = JSON.parse(decodeURIComponent(escape(atob(document.getElementById('syncData').value.trim())))); if(confirm('匯入將覆蓋目前名單，確定？')) { db = d; saveDB(); alert('成功！'); } } catch(e) { alert('代碼錯誤！'); } }
+function exportData() { navigator.clipboard.writeText(btoa(unescape(encodeURIComponent(JSON.stringify(db))))).then(() => alert('已複製代碼！')); }
+function importData() { try { const d = JSON.parse(decodeURIComponent(escape(atob(document.getElementById('syncData').value.trim())))); if(confirm('匯入？')) { db = d; saveDB(); alert('成功！'); } } catch(e) { alert('代碼錯誤！'); } }
 
 function initApp() {
     const today = new Date().toISOString().split('T')[0]; document.getElementById('reportDate').value = today;
