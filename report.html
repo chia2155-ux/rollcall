@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚑 救護編組產生器-坪頂 (v5.9.9)</title>
+    <title>🚑 救護編組產生器-坪頂 (v5.9.10)</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 10px; background-color: #f0f2f5; line-height: 1.4; }
         .container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -13,7 +13,7 @@
         .sub-group { background: #fff; padding: 10px; border: 1px solid #dee2e6; border-radius: 6px; margin-top: 8px; }
         .time-tag { background: #e8f0fe; color: #1a73e8; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-bottom: 5px; font-weight: bold; display: inline-block; }
         label { display: block; margin: 5px 0 2px; font-size: 12px; color: #5f6368; font-weight: bold; }
-        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #dadce0; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #dadce0; border-radius: 6px; box-sizing: border-box; font-size: 16px; transition: border-color 0.3s; }
         button { width: 100%; padding: 15px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; margin-top: 10px; }
         .btn-admin { background-color: #5f6368; font-size: 14px; padding: 8px; margin-bottom: 15px; width: auto; display: block; margin-left: auto; color: white; border: none; border-radius: 4px; }
         .admin-panel { display: none; background: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #1a73e8; }
@@ -25,16 +25,23 @@
         .chk-group input { width: 16px; height: 16px; margin: 0; cursor: pointer; }
         .time-select-mini { width: auto; font-size: 11px; padding: 1px; height: 24px; margin: 0; display: none; }
         #result { white-space: pre-wrap; background: #fffbe6; padding: 15px; border: 1px solid #ffe58f; margin-top: 20px; font-size: 14px; display: none; border-radius: 8px; color: #333; }
+        
+        /* 編輯中高亮動畫 */
+        @keyframes highlight {
+            0% { border-color: #27ae60; box-shadow: 0 0 10px rgba(39, 174, 96, 0.5); }
+            100% { border-color: #dadce0; box-shadow: none; }
+        }
+        .editing-flash { animation: highlight 1.5s ease-in-out; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🚑 救護編組產生器-坪頂 <span style="font-size: 12px; color: #888;">v5.9.9</span></h2>
+    <h2>🚑 救護編組產生器-坪頂 <span style="font-size: 12px; color: #888;">v5.9.10</span></h2>
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理 / 同步名單</button>
 
     <div id="adminPanel" class="admin-panel">
-        <span class="section-title" id="adminTitle">✨ 新增人員</span>
+        <span class="section-title" id="adminTitle" style="color: #27ae60;">✨ 新增人員</span>
         <select id="newType" onchange="adaptFields()">
             <option value="PingDing">坪頂營區</option>
             <option value="SongShan">嵩山營區</option>
@@ -56,11 +63,11 @@
         </div>
         
         <hr>
-        <span class="section-title">📲 同步與備份</span>
+        <span class="section-title">📲 備份與同步名單</span>
         <div style="background:#fff; padding:10px; border:1px solid #ccc; border-radius:8px;">
-            <button onclick="exportData()" style="background:#6c757d; font-size:12px; padding:5px; color:white; border:none; border-radius:4px;">複製代碼</button>
-            <textarea id="syncData" placeholder="貼上代碼..." style="margin-top:5px; font-size:12px; height:45px;"></textarea>
-            <button onclick="importData()" style="background:#17a2b8; font-size:12px; padding:5px; color:white; border:none; border-radius:4px;">匯入名單</button>
+            <button onclick="exportData()" style="background:#17a2b8; font-size:12px; padding:6px; color:white; border:none; border-radius:4px; margin-bottom:5px;">📋 匯出我的名單 (複製代碼)</button>
+            <textarea id="syncData" placeholder="在此貼上匯入代碼..." style="margin-top:5px; font-size:12px; height:45px;"></textarea>
+            <button onclick="importData()" style="background:#5f6368; font-size:12px; padding:6px; color:white; border:none; border-radius:4px;">📥 匯入名單 (蓋掉舊名單)</button>
         </div>
 
         <hr>
@@ -126,7 +133,7 @@
             <label>車長</label><select id="ldSS2" onchange="upP('ldSS2','SS2LP')"></select><input type="text" id="SS2LP" readonly class="readonly-input">
             <label>駕駛</label><select id="drSS2" onchange="upP('drSS2','SS2DP')"></select><input type="text" id="SS2DP" readonly class="readonly-input">
             <label class="chk-group" style="color:#5f6368;margin-top:8px;"><input type="checkbox" onchange="toggleExtra(this, 'extraSS2')"> 有隨車人員</label>
-            <div id="extraSS2" style="display:none;margin-top:5px;"><select id="exSS2" onchange="upP('exSS2','SS2EP')"></select><input type="text" id="SS2EP" readonly class="readonly-input"></div>
+            <div id="extraSS2" style="display:none;margin-top:5px;"><select id="exSS2" onchange="upP('exSS2','SS2EP')"></select><input type="text" id="PD2EP" readonly class="readonly-input"></div>
         </div>
     </div>
 
@@ -151,7 +158,7 @@ const defaultData = {
     Duty: [ { title: "情報官中尉", name: "陳家俊" }, { title: "飛技官中尉", name: "洪星瑋" }, { title: "作訓官中尉", name: "張晉愷" }, { title: "通信官中尉", name: "王蔚" }, { title: "後勤官中尉", name: "鄭家澄" }, { title: "訓練官中尉", name: "楊善宭" } ]
 };
 
-let db = JSON.parse(localStorage.getItem('ems_pingding_v599')) || JSON.parse(JSON.stringify(defaultData));
+let db = JSON.parse(localStorage.getItem('ems_pingding_v5910')) || JSON.parse(JSON.stringify(defaultData));
 
 function adaptFields() {
     const t = document.getElementById('newType').value;
@@ -170,8 +177,8 @@ function toggleExtra(chk, id) { document.getElementById(id).style.display = chk.
 function upP(s, p) { document.getElementById(p).value = document.getElementById(s).options[document.getElementById(s).selectedIndex].dataset.phone || ""; }
 function formatPhone(el) { let v = el.value.replace(/\D/g, ''); if (v.length > 4) v = v.slice(0, 4) + '-' + v.slice(4, 10); el.value = v; }
 function toggleAdmin() { const p = document.getElementById('adminPanel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; adaptFields(); renderAdminList(); }
-function saveDB() { localStorage.setItem('ems_pingding_v599', JSON.stringify(db)); initApp(); }
-function resetToDefault() { if(confirm('確定重設？')) { db = JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
+function saveDB() { localStorage.setItem('ems_pingding_v5910', JSON.stringify(db)); initApp(); }
+function resetToDefault() { if(confirm('確定重設名單？')) { db = JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
 
 function saveContact() {
     const t = document.getElementById('newType').value; const n = document.getElementById('newName').value;
@@ -195,9 +202,25 @@ function editContact(t, i) {
     if(t === 'Duty') { document.getElementById('newTitle').value = p.title; }
     else { document.getElementById('newUnit').value = p.unit; document.getElementById('newRank').value = p.rank; document.getElementById('newPhone').value = p.phone; }
     document.getElementById('newName').value = p.name;
+    
+    // UI 變更為編輯狀態
     document.getElementById('btnAction').innerText = '儲存修改';
     document.getElementById('btnCancel').style.display = 'block';
     document.getElementById('adminTitle').innerText = '✏️ 編輯人員';
+    document.getElementById('adminTitle').style.color = '#1a73e8';
+
+    // 🌟 自動平滑滾動到最上方的新增/編輯區塊
+    document.getElementById('adminTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // 🌟 閃爍高亮動畫提示
+    const flashList = ['newName', 'newPhone', 'newRank', 'newTitle'];
+    flashList.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.add('editing-flash');
+            setTimeout(() => el.classList.remove('editing-flash'), 1500);
+        }
+    });
 }
 
 function cancelEdit() {
@@ -206,6 +229,7 @@ function cancelEdit() {
     document.getElementById('btnAction').innerText = '確認新增';
     document.getElementById('btnCancel').style.display = 'none';
     document.getElementById('adminTitle').innerText = '✨ 新增人員';
+    document.getElementById('adminTitle').style.color = '#27ae60';
 }
 
 function deleteContact(type, index) { if(confirm('確定刪除？')) { db[type].splice(index, 1); saveDB(); } }
@@ -222,8 +246,8 @@ function renderAdminList() {
     });
 }
 
-function exportData() { navigator.clipboard.writeText(btoa(unescape(encodeURIComponent(JSON.stringify(db))))).then(() => alert('已複製代碼！')); }
-function importData() { try { const d = JSON.parse(decodeURIComponent(escape(atob(document.getElementById('syncData').value.trim())))); if(confirm('匯入？')) { db = d; saveDB(); alert('成功！'); } } catch(e) { alert('代碼錯誤！'); } }
+function exportData() { navigator.clipboard.writeText(btoa(unescape(encodeURIComponent(JSON.stringify(db))))).then(() => alert('匯出成功，已複製代碼！')); }
+function importData() { try { const d = JSON.parse(decodeURIComponent(escape(atob(document.getElementById('syncData').value.trim())))); if(confirm('匯入將覆蓋目前名單，確定？')) { db = d; saveDB(); alert('成功！'); } } catch(e) { alert('代碼錯誤！'); } }
 
 function initApp() {
     const today = new Date().toISOString().split('T')[0]; document.getElementById('reportDate').value = today;
@@ -252,11 +276,9 @@ function generateAndCopy() {
     res += `\n\n區域醫院：高雄小港醫院🏥\n後送路程：約7分鐘\n聯絡電話：07-8036783\n\n嵩山營區\n🚑救護車🚑` + getAmbuText('SS', document.getElementById('carSS').value, document.getElementById('sSS').checked, document.getElementById('timeSS').value);
     res += `\n\n區域醫院：高雄旗山醫院🏥\n後送路程：約10-15分鐘\n聯絡電話：07-6613811\n\n☎️戰情官☎️\n坪頂營區\n${document.getElementById('dutyName').value}\n民線：07-8913762\n軍線：712318`;
     
-    // 補回顯示文字邏輯
     const r = document.getElementById('result'); 
     r.innerText = res; 
     r.style.display = 'block'; 
-    
     navigator.clipboard.writeText(res).then(() => alert('已生成並複製！'));
 }
 initApp();
