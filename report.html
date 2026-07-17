@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚑 救護編組產生器-坪頂 (v5.9.11)</title>
+    <title>🚑 救護編組產生器-坪頂 (v5.9.12)</title>
     <!-- 引入支援手機拖拉排序的套件 -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
@@ -20,8 +20,20 @@
         .btn-admin { background-color: #5f6368; font-size: 14px; padding: 8px; margin-bottom: 15px; width: auto; display: block; margin-left: auto; color: white; border: none; border-radius: 4px; }
         .admin-panel { display: none; background: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #1a73e8; }
         .contact-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin-top: 3px; border-radius: 4px; font-size: 13px; border: 1px solid #eee; }
-        .drag-handle { cursor: grab; color: #999; padding: 0 8px; font-size: 16px; user-select: none; }
-        .drag-handle:active { cursor: grabbing; }
+        
+        /* 增加拖曳按鈕的感應範圍，並設定觸控不選取文字 */
+        .drag-handle { 
+            cursor: grab; 
+            color: #1a73e8; 
+            padding: 8px 16px 8px 8px; /* 擴大觸碰熱區 */
+            font-size: 18px; 
+            font-weight: bold;
+            user-select: none; 
+            -webkit-user-select: none;
+            touch-action: none; /* 告訴手機：按這裡時不要滑動整個網頁 */
+        }
+        .drag-handle:active { cursor: grabbing; color: #27ae60; }
+        
         .edit-btn { color: #1a73e8; cursor: pointer; font-weight: bold; padding: 2px 8px; margin-right: 5px; }
         .del-btn { color: #d93025; cursor: pointer; font-weight: bold; padding: 2px 8px; }
         .readonly-input { background-color: #e9ecef; color: #495057; }
@@ -41,7 +53,7 @@
 <body>
 
 <div class="container">
-    <h2>🚑 救護編組產生器-坪頂 <span style="font-size: 12px; color: #888;">v5.9.11</span></h2>
+    <h2>🚑 救護編組產生器-坪頂 <span style="font-size: 12px; color: #888;">v5.9.12</span></h2>
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理 / 同步名單</button>
 
     <div id="adminPanel" class="admin-panel">
@@ -75,7 +87,7 @@
         </div>
 
         <hr>
-        <span class="section-title">📂 目前名單 (按住 ☰ 可拖曳排序)</span>
+        <span class="section-title">📂 目前名單 (用手指拖曳 ☰ 即可排序)</span>
         <div id="listFull"></div>
         <button onclick="resetToDefault()" style="background:#d93025; font-size:12px; padding:5px; margin-top:15px; color:white; border:none; border-radius:4px;">⚠️ 重設回預設</button>
     </div>
@@ -162,7 +174,7 @@ const defaultData = {
     Duty: [ { title: "情報官中尉", name: "陳家俊" }, { title: "飛技官中尉", name: "洪星瑋" }, { title: "作訓官中尉", name: "張晉愷" }, { title: "通信官中尉", name: "王蔚" }, { title: "後勤官中尉", name: "鄭家澄" }, { title: "訓練官中尉", name: "楊善宭" } ]
 };
 
-let db = JSON.parse(localStorage.getItem('ems_pingding_v5911')) || JSON.parse(JSON.stringify(defaultData));
+let db = JSON.parse(localStorage.getItem('ems_pingding_v5912')) || JSON.parse(JSON.stringify(defaultData));
 
 function adaptFields() {
     const t = document.getElementById('newType').value;
@@ -181,7 +193,7 @@ function toggleExtra(chk, id) { document.getElementById(id).style.display = chk.
 function upP(s, p) { document.getElementById(p).value = document.getElementById(s).options[document.getElementById(s).selectedIndex].dataset.phone || ""; }
 function formatPhone(el) { let v = el.value.replace(/\D/g, ''); if (v.length > 4) v = v.slice(0, 4) + '-' + v.slice(4, 10); el.value = v; }
 function toggleAdmin() { const p = document.getElementById('adminPanel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; adaptFields(); renderAdminList(); }
-function saveDB() { localStorage.setItem('ems_pingding_v5911', JSON.stringify(db)); initApp(); }
+function saveDB() { localStorage.setItem('ems_pingding_v5912', JSON.stringify(db)); initApp(); }
 function resetToDefault() { if(confirm('確定重設名單？')) { db = JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
 
 function saveContact() {
@@ -242,7 +254,6 @@ function renderAdminList() {
     Object.keys(db).forEach(k => {
         if(!db[k] || db[k].length === 0) return;
         
-        // 為每個分類建立一個可拖曳的子容器
         let subContainerId = `sortable-${k}`;
         let sectionHeader = `<div style="font-weight:bold; font-size:12px; color:#1a73e8; margin-top:10px; margin-bottom:4px; padding-left:8px;">📌 ${keyMap[k]||k}營區</div>`;
         let subContainer = `<div id="${subContainerId}"></div>`;
@@ -265,21 +276,22 @@ function renderAdminList() {
                 </div>`;
         });
         
-        // 綁定拖曳套件 (Sortable.js)
+        // 🌟 針對手機觸控最佳化的 Sortable 初始化設定
         new Sortable(subDiv, {
             handle: '.drag-handle',
-            animation: 150,
+            animation: 180,
+            delay: 50,             // 手指按住 50 毫秒後才允許拖拉（防止誤觸滾動網頁）
+            delayOnTouchOnly: true,// 僅限手機觸碰時套用延遲，電腦上依然是隨按即拉
+            touchStartThreshold: 5,// 手指移動超過 5 像素才判定為拖曳，避免過於敏感
             onEnd: function (evt) {
                 const type = k;
                 const oldIndex = evt.oldIndex;
                 const newIndex = evt.newIndex;
                 
-                // 重新調整陣列內部的順序
                 const movedItem = db[type].splice(oldIndex, 1)[0];
                 db[type].splice(newIndex, 0, movedItem);
                 
-                // 儲存並即時更新全域選單
-                localStorage.setItem('ems_pingding_v5911', JSON.stringify(db));
+                localStorage.setItem('ems_pingding_v5912', JSON.stringify(db));
                 initApp();
             }
         });
