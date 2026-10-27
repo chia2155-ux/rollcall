@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚑 救護編組產生器-坪頂 (v5.9.16)</title>
+    <title>🚑 救護編組產生器-坪頂 (v5.9.17)</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 10px; background-color: #f0f2f5; line-height: 1.4; }
@@ -35,7 +35,7 @@
 <body>
 
 <div class="container">
-    <h2>🚑 救護編組產生器-坪頂 <span style="font-size: 12px; color: #888;">v5.9.16</span></h2>
+    <h2>🚑 救護編組產生器-坪頂 <span style="font-size: 12px; color: #888;">v5.9.17</span></h2>
     <button class="btn-admin" onclick="toggleAdmin()">⚙️ 管理 / 同步名單</button>
 
     <div id="adminPanel" class="admin-panel">
@@ -94,7 +94,7 @@
                 <label class="chk-group"><input type="checkbox" id="sPD" onchange="tS('PD')"> 交接</label>
             </div>
         </div>
-        <label>救護車車號</label><input type="text" id="carPD" value="軍H-20378">
+        <label>救護車車號</label><input type="text" id="carPD" value="軍H-20880">
         <div class="sub-group">
             <span id="labelPD1" class="time-tag" style="display:none;">16前</span>
             <label>車長</label><select id="ldPD1" onchange="upP('ldPD1','PD1LP')"></select><input type="text" id="PD1LP" readonly class="readonly-input">
@@ -126,20 +126,38 @@
         <div class="sub-group">
             <span id="labelSS1" class="time-tag" style="display:none;">16前</span>
             <label>車長</label><select id="ldSS1" onchange="upP('ldSS1','SS1LP')"></select><input type="text" id="SS1LP" readonly class="readonly-input">
-            <label>駕駛</label><select id="drSS1"></select>
-            <label style="font-size:11px; color:#1a73e8; margin-top:4px;">留守主官 (電話帶入駕駛)</label>
-            <select id="officerSS1" onchange="updateOfficerPhone('officerSS1','SS1DP')"></select>
+            
+            <label>駕駛</label><select id="drSS1" onchange="syncSSDriverPhone('SS1')"></select>
+            <label style="font-size:11px; color:#1a73e8; margin-top:4px;">駕駛電話來源</label>
+            <select id="phoneModeSS1" onchange="toggleSSPhoneMode('SS1')">
+                <option value="driver">駕駛電話</option>
+                <option value="officer">留守主官電話</option>
+            </select>
+            <div id="boxOfficerSS1" style="display:none;">
+                <label style="font-size:11px; color:#5f6368;">選擇留守主官</label>
+                <select id="officerSS1" onchange="syncSSDriverPhone('SS1')"></select>
+            </div>
             <input type="text" id="SS1DP" readonly class="readonly-input">
+            
             <label class="chk-group" style="color:#5f6368;margin-top:8px;"><input type="checkbox" onchange="toggleExtra(this, 'extraSS1')"> 有隨車人員</label>
             <div id="extraSS1" style="display:none;margin-top:5px;"><select id="exSS1" onchange="upP('exSS1','SS1EP')"></select><input type="text" id="SS1EP" readonly class="readonly-input"></div>
         </div>
         <div id="gSS2" class="sub-group" style="display:none;">
             <span id="labelSS2" class="time-tag">16後</span>
             <label>車長</label><select id="ldSS2" onchange="upP('ldSS2','SS2LP')"></select><input type="text" id="SS2LP" readonly class="readonly-input">
-            <label>駕駛</label><select id="drSS2"></select>
-            <label style="font-size:11px; color:#1a73e8; margin-top:4px;">留守主官 (電話帶入駕駛)</label>
-            <select id="officerSS2" onchange="updateOfficerPhone('officerSS2','SS2DP')"></select>
+            
+            <label>駕駛</label><select id="drSS2" onchange="syncSSDriverPhone('SS2')"></select>
+            <label style="font-size:11px; color:#1a73e8; margin-top:4px;">駕駛電話來源</label>
+            <select id="phoneModeSS2" onchange="toggleSSPhoneMode('SS2')">
+                <option value="driver">駕駛電話</option>
+                <option value="officer">留守主官電話</option>
+            </select>
+            <div id="boxOfficerSS2" style="display:none;">
+                <label style="font-size:11px; color:#5f6368;">選擇留守主官</label>
+                <select id="officerSS2" onchange="syncSSDriverPhone('SS2')"></select>
+            </div>
             <input type="text" id="SS2DP" readonly class="readonly-input">
+            
             <label class="chk-group" style="color:#5f6368;margin-top:8px;"><input type="checkbox" onchange="toggleExtra(this, 'extraSS2')"> 有隨車人員</label>
             <div id="extraSS2" style="display:none;margin-top:5px;"><select id="exSS2" onchange="upP('exSS2','SS2EP')"></select><input type="text" id="SS2EP" readonly class="readonly-input"></div>
         </div>
@@ -170,7 +188,7 @@ const defaultData = {
     Duty: [ { title: "情報官中尉", name: "陳家俊" }, { title: "飛技官中尉", name: "洪星瑋" }, { title: "作訓官中尉", name: "張晉愷" }, { title: "通信官中尉", name: "王蔚" }, { title: "後勤官中尉", name: "鄭家澄" }, { title: "訓練官中尉", name: "楊善宭" } ]
 };
 
-let db = JSON.parse(localStorage.getItem('ems_pingding_v5916')) || JSON.parse(JSON.stringify(defaultData));
+let db = JSON.parse(localStorage.getItem('ems_pingding_v5917')) || JSON.parse(JSON.stringify(defaultData));
 
 function adaptFields() {
     const t = document.getElementById('newType').value;
@@ -191,160 +209,13 @@ function tS(k){ const s = document.getElementById('s'+k).checked; document.getEl
 function uL(k){ const v = document.getElementById('time'+k).value; const labelV = (v === '0730') ? "0730" : v; document.getElementById('label'+k+'1').innerText = labelV + "前"; document.getElementById('label'+k+'2').innerText = labelV + "後"; }
 function toggleExtra(chk, id) { document.getElementById(id).style.display = chk.checked ? 'block' : 'none'; }
 function upP(s, p) { document.getElementById(p).value = document.getElementById(s).options[document.getElementById(s).selectedIndex].dataset.phone || ""; }
-function updateOfficerPhone(s, p) {
-    const opt = document.getElementById(s).options[document.getElementById(s).selectedIndex];
-    document.getElementById(p).value = opt.dataset.phone || "";
-}
-function formatPhone(el) { let v = el.value.replace(/\D/g, ''); if (v.length > 4) v = v.slice(0, 4) + '-' + v.slice(4, 10); el.value = v; }
-function toggleAdmin() { const p = document.getElementById('adminPanel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; adaptFields(); renderAdminList(); }
-function saveDB() { localStorage.setItem('ems_pingding_v5916', JSON.stringify(db)); initApp(); }
-function resetToDefault() { if(confirm('確定重設名單？')) { db = JSON.parse(JSON.stringify(defaultData)); saveDB(); } }
 
-function saveContact() {
-    const t = document.getElementById('newType').value; const n = document.getElementById('newName').value;
-    if(!n) return alert('姓名必填');
-    if(editIdx >= 0) {
-        if(t === 'Duty') db[t][editIdx] = { title: document.getElementById('newTitle').value, name: n };
-        else if(t === 'SSOfficers') db[t][editIdx] = { title: document.getElementById('newTitle').value, name: n, phone: document.getElementById('newPhone').value };
-        else db[t][editIdx] = { unit: document.getElementById('newUnit').value, rank: document.getElementById('newRank').value, name: n, phone: document.getElementById('newPhone').value };
-        alert('修改成功！');
-    } else {
-        if(!db[t]) db[t] = [];
-        if(t === 'Duty') db.Duty.push({ title: document.getElementById('newTitle').value, name: n });
-        else if(t === 'SSOfficers') db.SSOfficers.push({ title: document.getElementById('newTitle').value, name: n, phone: document.getElementById('newPhone').value });
-        else db[t].push({ unit: document.getElementById('newUnit').value, rank: document.getElementById('newRank').value, name: n, phone: document.getElementById('newPhone').value });
-        alert('新增成功！');
-    }
-    cancelEdit(); saveDB();
+function toggleSSPhoneMode(suffix) {
+    const mode = document.getElementById('phoneMode' + suffix).value;
+    document.getElementById('boxOfficer' + suffix).style.display = (mode === 'officer') ? 'block' : 'none';
+    syncSSDriverPhone(suffix);
 }
 
-function editContact(t, i) {
-    editIdx = i; editType = t;
-    const p = db[t][i];
-    document.getElementById('newType').value = t; adaptFields();
-    if(t === 'Duty' || t === 'SSOfficers') { 
-        document.getElementById('newTitle').value = p.title; 
-    } else { 
-        document.getElementById('newUnit').value = p.unit || "防空暨飛彈指揮部"; 
-        document.getElementById('newRank').value = p.rank; 
-    }
-    if(t !== 'Duty') document.getElementById('newPhone').value = p.phone || '';
-    document.getElementById('newName').value = p.name;
-    
-    document.getElementById('btnAction').innerText = '儲存修改';
-    document.getElementById('btnCancel').style.display = 'block';
-    document.getElementById('adminTitle').innerText = '✏️ 編輯人員';
-    document.getElementById('adminTitle').style.color = '#1a73e8';
-    document.getElementById('adminTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    ['newName', 'newPhone', 'newRank', 'newTitle'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.classList.add('editing-flash'); setTimeout(() => el.classList.remove('editing-flash'), 1500); }
-    });
-}
-
-function cancelEdit() {
-    editIdx = -1; editType = '';
-    ['newRank','newTitle','newName','newPhone'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('btnAction').innerText = '確認新增';
-    document.getElementById('btnCancel').style.display = 'none';
-    document.getElementById('adminTitle').innerText = '✨ 新增人員';
-    document.getElementById('adminTitle').style.color = '#27ae60';
-    adaptFields();
-}
-
-function deleteContact(type, index) { if(confirm('確定刪除？')) { db[type].splice(index, 1); saveDB(); } }
-
-function renderAdminList() {
-    const div = document.getElementById('listFull'); div.innerHTML = '';
-    const keyMap = { PingDing:'坪頂', SongShan:'嵩山', SSOfficers:'嵩山主官', Duty:'戰情' };
-    
-    Object.keys(db).forEach(k => {
-        if(!db[k] || db[k].length === 0) return;
-        let subContainerId = `sortable-${k}`;
-        div.innerHTML += `<div style="font-weight:bold; font-size:12px; color:#1a73e8; margin-top:10px; margin-bottom:4px; padding-left:8px;">📌 ${keyMap[k]||k}名單</div><div id="${subContainerId}"></div>`;
-        
-        const subDiv = document.getElementById(subContainerId);
-        (db[k]||[]).forEach((p, i) => {
-            const displayName = p.unit ? (p.unit+p.rank+p.name) : (p.title+p.name);
-            subDiv.innerHTML += `
-                <div class="contact-item" data-index="${i}">
-                    <div style="display:flex; align-items:center;">
-                        <span class="drag-handle">☰</span>
-                        <span>${displayName}</span>
-                    </div>
-                    <div>
-                        <span class="edit-btn" onclick="editContact('${k}', ${i})">✏️</span>
-                        <span class="del-btn" onclick="deleteContact('${k}', ${i})">✕</span>
-                    </div>
-                </div>`;
-        });
-    });
-
-    ['PingDing', 'SongShan', 'SSOfficers', 'Duty'].forEach(key => {
-        const el = document.getElementById(`sortable-${key}`);
-        if (el) {
-            new Sortable(el, {
-                handle: '.drag-handle', animation: 180, delay: 50, delayOnTouchOnly: true, touchStartThreshold: 5,
-                onEnd: function (evt) {
-                    const movedItem = db[key].splice(evt.oldIndex, 1)[0];
-                    db[key].splice(evt.newIndex, 0, movedItem);
-                    localStorage.setItem('ems_pingding_v5916', JSON.stringify(db));
-                    initApp();
-                }
-            });
-        }
-    });
-}
-
-function exportData() { navigator.clipboard.writeText(btoa(unescape(encodeURIComponent(JSON.stringify(db))))).then(() => alert('已複製代碼！')); }
-function importData() { try { const d = JSON.parse(decodeURIComponent(escape(atob(document.getElementById('syncData').value.trim())))); if(confirm('匯入？')) { db = d; saveDB(); alert('成功！'); } } catch(e) { alert('代碼錯誤！'); } }
-
-function initApp() {
-    const today = new Date().toISOString().split('T')[0]; document.getElementById('reportDate').value = today;
-    const fill = (id, list) => { const el = document.getElementById(id); if(!el) return; el.innerHTML = '<option value="">-- 請選擇 --</option>'; (list||[]).forEach(p => { const txt = p.unit ? (p.unit+p.rank+p.name) : (p.title+p.name); el.innerHTML += `<option value="${txt}" data-phone="${p.phone||''}">${txt}</option>`; }); };
-    
-    ['PD1','PD2'].forEach(x => { fill('ld'+x, db.PingDing); fill('dr'+x, db.PingDing); fill('ex'+x, db.PingDing); });
-    ['SS1','SS2'].forEach(x => { fill('ld'+x, db.SongShan); fill('dr'+x, db.SongShan); fill('ex'+x, db.SongShan); });
-    
-    const fillOfficers = (id, list) => {
-        const el = document.getElementById(id); if(!el) return;
-        el.innerHTML = '<option value="">-- 選擇留守主官 --</option>';
-        (list||[]).forEach(o => {
-            const label = `${o.title}${o.name}`;
-            el.innerHTML += `<option value="${label}" data-phone="${o.phone}">${label}</option>`;
-        });
-    };
-    fillOfficers('officerSS1', db.SSOfficers); fillOfficers('officerSS2', db.SSOfficers);
-
-    const dSel = document.getElementById('selDuty'); dSel.innerHTML = '<option value="">-- 選擇戰情人員 --</option>'; (db.Duty||[]).forEach((p, i) => dSel.innerHTML += `<option value="${i}">${p.title}${p.name}</option>`);
-    renderAdminList();
-}
-
-function uDuty() { const i = document.getElementById('selDuty').value; if(i!=="") document.getElementById('dutyName').value = db.Duty[i].title + db.Duty[i].name; }
-
-function generateAndCopy() {
-    const d = new Date(document.getElementById('reportDate').value); const dateStr = (d.getMonth()+1) + "月" + d.getDate() + "日";
-    const getAmbuText = (id, car, isSplit, time) => {
-        const getV = (suffix) => {
-            let res = `車長：${document.getElementById('ld'+suffix).value}\n${document.getElementById(suffix+'LP').value}\n駕駛：${document.getElementById('dr'+suffix).value}\n${document.getElementById(suffix+'DP').value}`;
-            if(document.getElementById('extra'+suffix).style.display === 'block') res += `\n隨車：${document.getElementById('ex'+suffix).value}\n${document.getElementById(suffix+'EP').value}`;
-            return res;
-        };
-        let res = `\n${isSplit ? time + '前\n' : ''}車號：${car}\n${getV(id+'1')}`;
-        if(isSplit) res += `\n\n${time}後\n車號：${car}\n${getV(id+'2')}`;
-        return res;
-    };
-    let res = `${dateStr}砲指部緊急傷病聯絡表：\n\n坪頂營區\n🚑救護車🚑` + getAmbuText('PD', document.getElementById('carPD').value, document.getElementById('sPD').checked, document.getElementById('timePD').value);
-    res += `\n\n區域醫院：高雄小港醫院🏥\n後送路程：約7分鐘\n聯絡電話：07-8036783\n\n嵩山營區\n🚑救護車🚑` + getAmbuText('SS', document.getElementById('carSS').value, document.getElementById('sSS').checked, document.getElementById('timeSS').value);
-    res += `\n\n區域醫院：高雄旗山醫院🏥\n後送路程：約10-15分鐘\n聯絡電話：07-6613811\n\n☎️戰情官☎️\n坪頂營區\n${document.getElementById('dutyName').value}\n民線：07-8913762\n軍線：712318`;
-    
-    const r = document.getElementById('result'); 
-    r.innerText = res; 
-    r.style.display = 'block'; 
-    navigator.clipboard.writeText(res).then(() => alert('已生成並複製！'));
-}
-initApp();
-</script>
-</body>
-</html>
+function syncSSDriverPhone(suffix) {
+    const mode = document.getElementById('phoneMode' + suffix).value;
+    const phoneInput =
